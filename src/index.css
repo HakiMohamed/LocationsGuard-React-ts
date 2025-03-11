@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+
+
+
+
+
+    
+
+  
+  .react-select-container .react-select__control {
+    border-radius: 0.75rem;
+    border: 1px solid rgb(229, 231, 235);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    min-height: 42px;
+  }
+  
+  .react-select-container .react-select__control:hover {
+    border-color: rgb(209, 213, 219);
+  }
+  
+  .react-select-container .react-select__control--is-focused {
+    border-color: rgb(79, 70, 229);
+    box-shadow: 0 0 0 1px rgb(79, 70, 229);
+  }
+  
+  .react-select-container .react-select__menu {
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  
+  .react-select-container .react-select__option {
+    padding: 8px 12px;
+  }
+  
+  .react-select-container .react-select__option--is-focused {
+    background-color: rgba(79, 70, 229, 0.1);
+  }
+  
+  .react-select-container .react-select__option--is-selected {
+    background-color: rgb(79, 70, 229);
+  }
+
+.react-datepicker__year-dropdown {
+  @apply !bg-white !border !border-gray-200 !rounded-xl !shadow-lg !max-h-64;
+}
+
+.react-datepicker__year-dropdown-container {
+  @apply !text-base;
+}
+
+.react-datepicker__year-option {
+  @apply !py-2 !px-4 hover:!bg-indigo-50 !cursor-pointer;
+}
+
+.react-datepicker__year-option--selected {
+  @apply !bg-indigo-500 !text-white;
+}
+
+.react-datepicker__year-option--selected-year {
+  @apply !font-medium;
+}
+
+.react-datepicker__header__dropdown {
+  @apply !mt-2 !mb-4;
+}
