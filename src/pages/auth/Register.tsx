@@ -58,7 +58,6 @@ export default function Register() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    confirmPassword: '',
     firstName: '',
     lastName: '',
     phoneNumber: '',
@@ -192,7 +191,11 @@ export default function Register() {
     try {
       // Valider tout le formulaire
       registerSchema.parse(formData);
-      await register(formData);
+      
+      // Remove confirmPassword before sending to backend
+      const { confirmPassword, ...registrationData } = formData;
+      
+      await register(registrationData);
       navigate('/verify-email', { 
         state: { email: formData.email }
       });

@@ -1,0 +1,629 @@
+/**
+ * 
+ * import React, { useEffect, useState } from 'react';
+import { useAutomobile } from '../../contexts/AutomobileContext';
+import { useCategory } from '../../contexts/CategoryContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { useReservation } from '../../contexts/ReservationContext';
+import { Reservation } from '../../types/reservation.types';
+import { ReservationStatus } from '../../types/reservation.types';
+import { ReservationStats } from '../../types/automobile.types';
+import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import ReservationModal from '../../components/Reservations/ReservationModal';
+import ReservationDetailsModal from '../../components/Reservations/ReservationDetailsModal';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js';
+import { Pie, Bar } from 'react-chartjs-2';
+import AutomobileDetailsModal from '../../components/Automobiles/AutomobileDetailsModal';
+import { useClient } from '../../contexts/ClientContext';
+
+// Register ChartJS components
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
+
+const Dashboard: React.FC = () => {
+  const { automobiles, fetchAutomobiles, getMostReservedAutomobiles, getLeastReservedAutomobiles } = useAutomobile();
+  const { categories, fetchCategories } = useCategory();
+  const { user } = useAuth();
+  const { reservations, fetchReservations, updateReservationStatus } = useReservation();
+  const { clients, fetchClients } = useClient();
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedDayReservations, setSelectedDayReservations] = useState<Reservation[]>([]);
+  const [showReservationModal, setShowReservationModal] = useState(false);
+  const [selectedDetailReservation, setSelectedDetailReservation] = useState<Reservation | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [mostReserved, setMostReserved] = useState<ReservationStats[]>([]);
+  const [leastReserved, setLeastReserved] = useState<ReservationStats[]>([]);
+  const [selectedAutomobile, setSelectedAutomobile] = useState<any>(null);
+  const [showAutomobileModal, setShowAutomobileModal] = useState(false);
+
+  useEffect(() => {
+    fetchAutomobiles();
+    fetchCategories();
+    fetchReservations();
+    fetchClients();
+  }, [fetchAutomobiles, fetchCategories, fetchReservations, fetchClients]);
+
+  useEffect(() => {
+    const fetchReservationStats = async () => {
+      try {
+        const mostReservedData = await getMostReservedAutomobiles(5);
+        const leastReservedData = await getLeastReservedAutomobiles(5);
+        
+        // Récupérer les informations complètes des automobiles
+        const enrichedMostReserved = await Promise.all(
+          mostReservedData.map(async (stat) => {
+            const autoDetails = automobiles.find(auto => auto._id === stat.automobileId);
+            if (autoDetails) {
+              return {
+                ...stat,
+                ...autoDetails,
+                category: categories.find(cat => 
+                  cat._id === (typeof autoDetails.category === 'string' 
+                    ? autoDetails.category 
+                    : autoDetails.category?._id
+                  )
+                ) || { name: 'N/A' }
+              };
+            }
+            return stat;
+          })
+        );
+
+        const enrichedLeastReserved = await Promise.all(
+          leastReservedData.map(async (stat) => {
+            const autoDetails = automobiles.find(auto => auto._id === stat.automobileId);
+            if (autoDetails) {
+              return {
+                ...stat,
+                ...autoDetails,
+                category: categories.find(cat => 
+                  cat._id === (typeof autoDetails.category === 'string' 
+                    ? autoDetails.category 
+                    : autoDetails.category?._id
+                  )
+                ) || { name: 'N/A' }
+              };
+            }
+            return stat;
+          })
+        );
+
+        setMostReserved(enrichedMostReserved);
+        setLeastReserved(enrichedLeastReserved);
+      } catch (error) {
+        console.error('Error fetching reservation stats:', error);
+      }
+    };
+
+    if (categories.length > 0 && automobiles.length > 0) {
+      fetchReservationStats();
+    }
+  }, [getMostReservedAutomobiles, getLeastReservedAutomobiles, categories, automobiles]);
+
+  const totalAutomobiles = automobiles?.length || 0;
+  const availableAutomobiles = automobiles?.filter(auto => auto.isAvailable)?.length || 0;
+  const totalCategories = categories?.length || 0;
+  const averagePrice = automobiles && automobiles.length > 0
+    ? Math.round(automobiles.reduce((acc, auto) => acc + (auto.dailyRate || 0), 0) / totalAutomobiles)
+    : 0;
+
+  const occupancyRate = totalAutomobiles > 0
+    ? ((availableAutomobiles / totalAutomobiles) * 100).toFixed(1)
+    : "0.0";
+
+  const stats = [
+    {
+      title: "Total Automobiles",
+      value: totalAutomobiles,
+      icon: (
+        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+        </svg>
+      ),
+      bgColor: "bg-gradient-to-r from-blue-50 to-blue-100",
+      textColor: "text-blue-600"
+    },
+    {
+      title: "Total Clients",
+      value: clients.length,
+      icon: (
+        <svg className="w-6 h-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+      bgColor: "bg-gradient-to-r from-pink-50 to-pink-100",
+      textColor: "text-pink-600"
+    },
+    {
+      title: "Total Réservations",
+      value: reservations.length,
+      icon: (
+        <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+      bgColor: "bg-gradient-to-r from-indigo-50 to-indigo-100",
+      textColor: "text-indigo-600"
+    },
+    {
+      title: "Véhicules Disponibles",
+      value: availableAutomobiles,
+      icon: (
+        <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      bgColor: "bg-gradient-to-r from-green-50 to-green-100",
+      textColor: "text-green-600"
+    },
+    {
+      title: "Catégories",
+      value: totalCategories,
+      icon: (
+        <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+        </svg>
+      ),
+      bgColor: "bg-gradient-to-r from-purple-50 to-purple-100",
+      textColor: "text-purple-600"
+    },
+    {
+      title: "Prix Moyen/Jour",
+      value: `${averagePrice} DH`,
+      icon: (
+        <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+      bgColor: "bg-gradient-to-r from-yellow-50 to-yellow-100",
+      textColor: "text-yellow-600"
+    }
+  ];
+
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const previousMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
+  };
+
+  const nextMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
+  };
+
+  const hasReservations = (date: Date) => {
+    return reservations.some(reservation => {
+      const startDate = new Date(reservation.startDate);
+      const endDate = new Date(reservation.endDate);
+      return date >= startDate && date <= endDate;
+    });
+  };
+
+  const getReservationsForDay = (date: Date) => {
+    return reservations.filter(reservation => {
+      const startDate = new Date(reservation.startDate);
+      const endDate = new Date(reservation.endDate);
+      return date >= startDate && date <= endDate;
+    });
+  };
+
+  const handleDayClick = (date: Date) => {
+    const dayReservations = getReservationsForDay(date);
+    setSelectedDate(date);
+    setSelectedDayReservations(dayReservations);
+    setShowModal(true);
+  };
+
+  const handleStatusChange = async (reservationId: string, newStatus: ReservationStatus) => {
+    try {
+      await updateReservationStatus(reservationId, newStatus);
+      
+      if (selectedDetailReservation && selectedDetailReservation._id === reservationId) {
+        setSelectedDetailReservation({
+          ...selectedDetailReservation,
+          status: newStatus
+        });
+      }
+
+      setSelectedDayReservations(prevReservations =>
+        prevReservations.map(res =>
+          res._id === reservationId
+            ? { ...res, status: newStatus }
+            : res
+        )
+      );
+
+      await fetchReservations();
+    } catch (error) {
+      console.error('Erreur lors du changement de statut:', error);
+      throw error;
+    }
+  };
+
+  const handleAutomobileClick = (automobile: any) => {
+    setSelectedAutomobile(automobile);
+    setShowAutomobileModal(true);
+  };
+
+  const renderCalendar = () => {
+    const daysInMonth = getDaysInMonth(currentDate);
+    const firstDay = getFirstDayOfMonth(currentDate);
+    const days = [];
+    const weekDays = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+
+    weekDays.forEach(day => {
+      days.push(
+        <div key={`header-${day}`} className="text-sm text-gray-600 font-medium py-2">
+          {day}
+        </div>
+      );
+    });
+
+    for (let i = 0; i < firstDay; i++) {
+      days.push(<div key={`empty-${i}`} className="h-14"></div>);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const currentDayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+      const isToday = new Date().toDateString() === currentDayDate.toDateString();
+      const hasReservationsForDay = hasReservations(currentDayDate);
+
+      days.push(
+        <div
+          key={`day-${day}`}
+          className="h-14 relative"
+          onClick={() => handleDayClick(currentDayDate)}
+        >
+          <button
+            className={`w-full h-full flex flex-col items-center justify-center transition-all duration-200 rounded-lg
+              ${isToday ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-gray-50'}
+              ${hasReservationsForDay ? 'border-2 border-blue-300' : ''}
+            `}
+          >
+            <span className="text-sm font-medium">{day}</span>
+            {hasReservationsForDay && (
+              <div className="w-2 h-2 bg-blue-500 rounded-full mt-1"></div>
+            )}
+          </button>
+        </div>
+      );
+    }
+
+    return days;
+  };
+
+  const ReservationsModal = () => {
+    if (!showModal) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-25 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-lg font-semibold">
+                  Réservations du {selectedDate?.toLocaleDateString('fr-FR')}
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  {selectedDayReservations.length} réservation(s)
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    setShowModal(false);
+                    setShowReservationModal(true);
+                  }}
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow"
+                >
+                  <PlusIcon className="h-4 w-4 mr-1.5" />
+                  Nouvelle réservation
+                </button>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-all duration-200"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {selectedDayReservations.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="mx-auto w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+                  <svg className="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <p className="text-gray-500 mb-1">Aucune réservation pour ce jour</p>
+                <p className="text-sm text-gray-400">Cliquez sur le bouton "Nouvelle réservation" pour en créer une</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {selectedDayReservations.map((reservation) => {
+                  const automobile = automobiles.find(auto => 
+                    auto._id === (typeof reservation.automobile === 'object' ? reservation.automobile._id : reservation.automobile)
+                  );
+                  return (
+                    <div
+                      key={reservation._id}
+                      onClick={() => {
+                        setSelectedDetailReservation(reservation);
+                        setShowDetailsModal(true);
+                      }}
+                      className="bg-white border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-all duration-200 shadow-sm hover:shadow cursor-pointer"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium text-gray-900">
+                            {automobile?.brand} {automobile?.model}
+                          </h4>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Du {new Date(reservation.startDate).toLocaleDateString('fr-FR')} au{' '}
+                            {new Date(reservation.endDate).toLocaleDateString('fr-FR')}
+                          </p>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2
+                            ${reservation.status === ReservationStatus.CONFIRMED ? 'bg-green-100 text-green-800' :
+                            reservation.status === ReservationStatus.PENDING ? 'bg-yellow-100 text-yellow-800' :
+                            reservation.status === ReservationStatus.CANCELLED ? 'bg-red-100 text-red-800' :
+                            reservation.status === ReservationStatus.COMPLETED ? 'bg-blue-100 text-blue-800' :
+                            'bg-gray-100 text-gray-800'}`}
+                          >
+                            {reservation.status}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-gray-900">{reservation.totalPrice} DH</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const ReservationStats = () => {
+    const pieChartData = {
+      labels: mostReserved.map(auto => `${auto.brand} ${auto.model}`),
+      datasets: [{
+        data: mostReserved.map(auto => auto.reservationCount),
+        backgroundColor: [
+          'rgba(54, 162, 235, 0.8)',
+          'rgba(75, 192, 192, 0.8)',
+          'rgba(153, 102, 255, 0.8)',
+          'rgba(255, 159, 64, 0.8)',
+        ],
+        borderWidth: 1
+      }]
+    };
+
+    const barChartData = {
+      labels: leastReserved.map(auto => `${auto.brand} ${auto.model}`),
+      datasets: [{
+        label: 'Nombre de réservations',
+        data: leastReserved.map(auto => auto.reservationCount),
+        backgroundColor: 'rgba(255, 99, 132, 0.8)',
+        borderWidth: 1
+      }]
+    };
+
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+        <div className="bg-white rounded-2xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">Véhicules les plus réservés</h2>
+            <div className="bg-blue-100 rounded-full p-2">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </div>
+          </div>
+          <div className="mb-8 h-72">
+            <Pie data={pieChartData} options={{ maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }} />
+          </div>
+          <div className="space-y-4">
+            {mostReserved.map((auto) => (
+              <div
+                key={auto._id}
+                onClick={() => handleAutomobileClick(auto)}
+                className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-blue-50 cursor-pointer transition-all duration-300 group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-20 h-20 rounded-xl overflow-hidden">
+                    {auto.images && auto.images[0] ? (
+                      <img
+                        src={auto.images[0]}
+                        alt={`${auto.brand} ${auto.model}`}
+                        className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 group-hover:text-blue-600">{auto.brand} {auto.model}</h3>
+                    <p className="text-sm text-gray-500">Année {auto.year}</p>
+                  </div>
+                </div>
+                <div className="flex items-center">
+                  <span className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium group-hover:bg-blue-200">
+                    {auto.reservationCount} réservation{auto.reservationCount > 1 ? 's' : ''}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-xl p-8 transition-all duration-300 hover:shadow-2xl">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent">Véhicules les moins réservés</h2>
+            <div className="bg-red-100 rounded-full p-2">
+              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6" />
+              </svg>
+            </div>
+          </div>
+          <div className="mb-8 h-72">
+            <Bar 
+              data={barChartData} 
+              options={{
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 }
+                  }
+                }
+              }} 
+            />
+          </div>
+          <div className="space-y-4">
+            {leastReserved.map((auto) => (
+              <div
+                key={auto._id}
+                onClick={() => handleAutomobileClick(auto)}
+                className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-red-50 cursor-pointer transition-all duration-300 group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-20 h-20 rounded-xl overflow-hidden">
+                    {auto.images && auto.images[0] ? (
+                      <img
+                        src={auto.images[0]}
+                        alt={`${auto.brand} ${auto.model}`}
+                        className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 group-hover:text-red-600">{auto.brand} {auto.model}</h3>
+                    <p className="text-sm text-gray-500">Année {auto.year}</p>
+                  </div>
+                </div>
+                <div className="flex items-center">
+                  <span className="px-4 py-2 bg-red-100 text-red-800 rounded-full text-sm font-medium group-hover:bg-red-200">
+                    {auto.reservationCount} réservation{auto.reservationCount > 1 ? 's' : ''}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">
+          Bonjour, {user?.firstName} {user?.lastName}
+        </h1>
+        <p className="mt-2 text-gray-600">Vue d'ensemble de votre flotte automobile</p>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <button
+            onClick={previousMonth}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+          >
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h2 className="text-lg font-semibold text-gray-900">
+            {currentDate.toLocaleString('fr-FR', { month: 'long', year: 'numeric' })}
+          </h2>
+          <button
+            onClick={nextMonth}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+          >
+            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+        <div className="grid grid-cols-7 text-center gap-2">
+          {renderCalendar()}
+        </div>
+      </div>
+
+      <ReservationsModal />
+
+      <ReservationModal
+        isOpen={showReservationModal}
+        onClose={() => setShowReservationModal(false)}
+        reservation={null}
+      />
+
+      <ReservationDetailsModal
+        isOpen={showDetailsModal}
+        onClose={() => {
+          setShowDetailsModal(false);
+          setSelectedDetailReservation(null);
+        }}
+        reservation={selectedDetailReservation}
+        onStatusChange={handleStatusChange}
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {stats.map((stat, index) => (
+          <div
+            key={index}
+            className={`${stat.bgColor} rounded-lg p-6 transition-transform duration-300 hover:scale-105 hover:shadow-lg`}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                <p className={`text-2xl font-bold ${stat.textColor} mt-2`}>
+                  {stat.value}
+                </p>
+              </div>
+              <div className={`${stat.bgColor} rounded-full p-3`}>
+                {stat.icon}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <ReservationStats />
+
+      <AutomobileDetailsModal
+        isOpen={showAutomobileModal}
+        onClose={() => setShowAutomobileModal(false)}
+        automobile={selectedAutomobile}
+      />
+    </div>
+  );
+};
+
+export default Dashboard;
+ * 
+* */

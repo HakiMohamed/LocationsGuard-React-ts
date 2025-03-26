@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { automobileService } from '../services/automobile.service';
 import { Automobile } from '../types/automobile.types';
+import { ReservationStats } from '../types/automobile.types';
+
 
 interface AutomobileContextType {
   automobiles: Automobile[];
@@ -13,6 +15,8 @@ interface AutomobileContextType {
   updateAvailability: (id: string, isAvailable: boolean) => Promise<void>;
   getAutomobilesByCategory: (categoryId: string) => Promise<Automobile[]>;
   countAutomobilesByCategory: (categoryId: string) => Promise<number>;
+  getMostReservedAutomobiles: (limit: number) => Promise<ReservationStats[]>;
+  getLeastReservedAutomobiles: (limit: number) => Promise<ReservationStats[]>;
 }
 
 const AutomobileContext = createContext<AutomobileContextType | undefined>(undefined);
@@ -120,8 +124,24 @@ export const AutomobileProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setLoading(false);
     }
   }, []);
-  
 
+  const getMostReservedAutomobiles = useCallback(async (limit: number) => {
+    try {
+      return await automobileService.getMostReserved(limit);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+      return [];
+    }
+  }, []);
+
+  const getLeastReservedAutomobiles = useCallback(async (limit: number) => {
+    try {
+      return await automobileService.getLeastReserved(limit);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+      return [];
+    }
+  }, []);
 
   return (
     <AutomobileContext.Provider
@@ -136,6 +156,8 @@ export const AutomobileProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         updateAvailability,
         getAutomobilesByCategory,
         countAutomobilesByCategory,
+        getMostReservedAutomobiles,
+        getLeastReservedAutomobiles,
       }}
     >
       {children}

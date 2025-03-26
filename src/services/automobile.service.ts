@@ -1,5 +1,5 @@
 import api from './api.service';
-import { Automobile } from '../types/automobile.types';
+import { Automobile, ReservationStats } from '../types/automobile.types';
 
 interface ApiResponse<T> {
   data: T;
@@ -17,6 +17,17 @@ interface CountResponse {
     statusCode: number;
     timestamp: string;
   };
+}
+
+
+
+interface StatsResponse {
+  data: {
+    success: boolean;
+    data: ReservationStats[];
+  };
+  statusCode: number;
+  timestamp: string;
 }
 
 export const automobileService = {
@@ -76,5 +87,15 @@ export const automobileService = {
   getAutomobilesByCategory: async (categoryId: string): Promise<Automobile[]> => {
     const response = await api.get<ApiResponse<Automobile[]>>(`/automobiles/category/${categoryId}`);
     return response.data.data;
+  },
+
+  getMostReserved: async (limit: number): Promise<ReservationStats[]> => {
+    const response = await api.get<StatsResponse>(`/automobiles/stats/most-reserved?limit=${limit}`);
+    return response.data.data.data;
+  },
+
+  getLeastReserved: async (limit: number): Promise<ReservationStats[]> => {
+    const response = await api.get<StatsResponse>(`/automobiles/stats/least-reserved?limit=${limit}`);
+    return response.data.data.data;
   },
 };

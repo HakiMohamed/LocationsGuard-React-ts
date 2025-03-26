@@ -1,3 +1,4 @@
+//pages/admin/AutomobilesPage.tsx
 import React, { useEffect, useState, useRef } from 'react';
 import { useAutomobile } from '../../contexts/AutomobileContext';
 import { Automobile, Category } from '../../types/automobile.types';
@@ -130,6 +131,8 @@ const AutomobilesPage: React.FC = () => {
   const [automobilesWithCategories, setAutomobilesWithCategories] = useState<Automobile[]>([]);
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [automobileToDelete, setAutomobileToDelete] = useState<Automobile | null>(null);
 
   useEffect(() => {
     fetchAutomobiles();
@@ -174,15 +177,15 @@ const AutomobilesPage: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette automobile ?')) {
-      try {
-        await deleteAutomobile(id);
-        toast.success('Automobile supprimée avec succès');
-        await fetchAutomobiles();
-      } catch (error) {
-        console.error('Error:', error);
-        toast.error('Erreur lors de la suppression');
-      }
+    try {
+      await deleteAutomobile(id);
+      toast.success('Automobile supprimée avec succès');
+      setIsDeleteModalOpen(false);
+      setAutomobileToDelete(null);
+      await fetchAutomobiles();
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Erreur lors de la suppression');
     }
   };
 
@@ -266,7 +269,10 @@ const AutomobilesPage: React.FC = () => {
     }
     return null;
   }) || [])).filter((category): category is string => category !== null).sort();
-  const uniqueYears = Array.from(new Set(automobilesWithCategories?.map(auto => auto.year?.toString()) || [])).filter(Boolean).sort((a, b) => parseInt(b) - parseInt(a));
+  const uniqueYears = Array.from(new Set(automobilesWithCategories?.map(auto => {
+    // Ensure the year is defined and is a number before calling toString
+    return auto.year !== undefined && auto.year !== null ? auto.year.toString() : null;
+  }) || [])).filter(Boolean).sort((a, b) => parseInt(b) - parseInt(a));
 
   // Apply filters and search
   const filteredAutomobiles = Array.isArray(automobilesWithCategories) ? automobilesWithCategories.filter(automobile => {
@@ -570,7 +576,7 @@ const AutomobilesPage: React.FC = () => {
                           <img 
                             src={automobile.images[0]} 
                             alt={automobile.brand} 
-                            className="h-10 w-10 rounded-full object-cover mr-3 cursor-pointer hover:opacity-75"
+                            className="h-16 w-30 max-w-30 rounded  object-cover mr-3 cursor-pointer hover:opacity-75"
                             onClick={() => handleImageClick(automobile.images[0], 0)}
                           />
                         ) : (
@@ -602,7 +608,7 @@ const AutomobilesPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <select
-                        value={automobile.isAvailable.toString()}
+                        value={automobile.isAvailable !== undefined ? automobile.isAvailable.toString() : 'false'}
                         onChange={(e) => handleAvailabilityChange(automobile._id, e.target.value === 'true')}
                         className={`px-2 py-1 text-xs font-semibold rounded-full w-39 border-0 
                           ${automobile.isAvailable 
@@ -636,7 +642,10 @@ const AutomobilesPage: React.FC = () => {
                           </svg>
                         </button>
                         <button
-                          onClick={() => handleDelete(automobile._id)}
+                          onClick={() => {
+                            setAutomobileToDelete(automobile);
+                            setIsDeleteModalOpen(true);
+                          }}
                           className="text-red-600 hover:text-red-900 bg-red-50 p-1.5 rounded-md transition-colors"
                           title="Supprimer"
                         >
@@ -753,6 +762,56 @@ const AutomobilesPage: React.FC = () => {
             alt="Full screen"
             className="max-h-[90vh] max-w-[90vw] object-contain"
           />
+        </div>
+      )}
+
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div className="relative inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+              <div className="sm:flex sm:items-start">
+                <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                  <svg className="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                  </svg>
+                </div>
+                <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                    Confirmer la suppression
+                  </h3>
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500 mb-2">
+                      Êtes-vous sûr de vouloir supprimer cette automobile ? Cette action est irréversible.
+                    </p>
+                    <p className="text-sm font-medium text-red-500">
+                      Attention : La suppression de cette automobile entraînera également la suppression de toutes les réservations liées à ce véhicule.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                <button
+                  type="button"
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  onClick={() => automobileToDelete && handleDelete(automobileToDelete._id)}
+                >
+                  Supprimer
+                </button>
+                <button
+                  type="button"
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
+                  onClick={() => {
+                    setIsDeleteModalOpen(false);
+                    setAutomobileToDelete(null);
+                  }}
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

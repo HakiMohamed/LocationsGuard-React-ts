@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { reservationService } from '../services/reservation.service';
-import { Reservation } from '../types/reservation.types';
+import { Reservation, ReservationStatus } from '../types/reservation.types';
 import { CreateReservationI, UpdateReservationI } from '../types/reservation.types';
 
 interface ReservationContextType {
@@ -18,6 +18,8 @@ interface ReservationContextType {
   confirmReservation: (id: string) => Promise<void>;
   completeReservation: (id: string) => Promise<void>;
   setPendingReservation: (id: string) => Promise<void>;
+  updateReservationStatus: (id: string, status: ReservationStatus) => Promise<void>;
+  setPaymentStatus: (id: string, isPaid: boolean) => Promise<void>;
 }
 
 const ReservationContext = createContext<ReservationContextType | undefined>(undefined);
@@ -56,6 +58,7 @@ export const ReservationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const updateReservation = useCallback(async (id: string, data: UpdateReservationI) => {
     setLoading(true);
+    console.log(data);
     try {
       const updatedReservation = await reservationService.update(id, data);
       setReservations(prev => 
@@ -162,12 +165,44 @@ export const ReservationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, []);
 
+  const updateReservationStatus = useCallback(async (id: string, status: ReservationStatus) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const updatedReservation = await reservationService.updateStatus(id, status);
+      setReservations(prev => 
+        prev.map(reservation => reservation._id === id ? updatedReservation : reservation)
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+      throw err;
+    } finally { 
+      setLoading(false);
+    }
+  }, []);
+
   const setPendingReservation = useCallback(async (id: string) => {
     try {
       setLoading(true);
       setError(null);
       const updatedReservation = await reservationService.setPending(id);
       setReservations(prev => 
+        prev.map(reservation => reservation._id === id ? updatedReservation : reservation)
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const setPaymentStatus = useCallback(async (id: string, isPaid: boolean) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const updatedReservation = await reservationService.updatePaymentStatus(id, isPaid);
+      setReservations(prev =>
         prev.map(reservation => reservation._id === id ? updatedReservation : reservation)
       );
     } catch (err) {
@@ -193,6 +228,8 @@ export const ReservationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     confirmReservation,
     completeReservation,
     setPendingReservation,
+    updateReservationStatus,
+    setPaymentStatus,
   };
 
   return (

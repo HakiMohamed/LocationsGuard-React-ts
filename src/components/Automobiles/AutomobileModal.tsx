@@ -1,3 +1,4 @@
+//components/Automobiles/AutomobileModal.tsx
 import React, { useEffect, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon, ArrowLongRightIcon, ArrowLongLeftIcon, CheckIcon, PlusCircleIcon, PhotoIcon } from '@heroicons/react/24/outline';
@@ -9,8 +10,6 @@ import { useCategory } from '../../contexts/CategoryContext';
 import ImageUpload from '../ui/ImageUpload';
 import { Fragment } from 'react';
 import { Automobile } from '../../types/automobile.types';
-
-
 
 interface AutomobileModalProps {  
   isOpen: boolean;
@@ -38,6 +37,8 @@ const AutomobileModal: React.FC<AutomobileModalProps> = ({ isOpen, onClose, onSu
     description: '',
     features: [] as string[],
     category: '',
+    lastVidangeDate: '',
+    insuranceType: 'TIERS_SIMPLE' as InsuranceType,
   });
   const [files, setFiles] = useState<File[]>([]);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -61,7 +62,11 @@ const AutomobileModal: React.FC<AutomobileModalProps> = ({ isOpen, onClose, onSu
         fuelConsumption: automobile.fuelConsumption?.toString() || '',
         description: automobile.description || '',
         features: automobile.features || [],
-        category: automobile.category,
+        category: automobile.category._id,
+        lastVidangeDate: automobile.lastVidangeDate 
+          ? new Date(automobile.lastVidangeDate).toISOString().split('T')[0]
+          : '',
+        insuranceType: automobile.insuranceType || 'TIERS_SIMPLE',
       });
     } else {
       setFormData({
@@ -80,6 +85,8 @@ const AutomobileModal: React.FC<AutomobileModalProps> = ({ isOpen, onClose, onSu
         description: '',
         features: [],
         category: '',
+        lastVidangeDate: '',
+        insuranceType: 'TIERS_SIMPLE',
       });
     }
     setCurrentStep(1);
@@ -238,6 +245,21 @@ const AutomobileModal: React.FC<AutomobileModalProps> = ({ isOpen, onClose, onSu
               </select>
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Type d'assurance</label>
+              <select
+                value={formData.insuranceType}
+                onChange={(e) => setFormData((prev) => ({ ...prev, insuranceType: e.target.value as InsuranceType }))}
+                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="TIERS_SIMPLE">Tiers Simple</option>
+                <option value="TIERS_ETENDU">Tiers Étendu</option>
+                <option value="TOUS_RISQUES">Tous Risques</option>
+                <option value="TOUS_RISQUES_PLUS">Tous Risques Plus</option>
+              </select>
+            </div>
+          </div>
         </div>
       ),
     },
@@ -329,14 +351,23 @@ const AutomobileModal: React.FC<AutomobileModalProps> = ({ isOpen, onClose, onSu
               placeholder="Ex: 1600"
             />
           </div>
-          <Input
-            id="fuelConsumption"
-            label="Consommation de carburant (L/100km)"
-            type="number"
-            value={formData.fuelConsumption}
-            onChange={(e) => setFormData((prev) => ({ ...prev, fuelConsumption: e.target.value }))}
-            placeholder="Ex: 5.5"
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              id="fuelConsumption"
+              label="Consommation de carburant (L/100km)"
+              type="number"
+              value={formData.fuelConsumption}
+              onChange={(e) => setFormData((prev) => ({ ...prev, fuelConsumption: e.target.value }))}
+              placeholder="Ex: 5.5"
+            />
+            <Input
+              id="lastVidangeDate"
+              label="Date dernière vidange"
+              type="date"
+              value={formData.lastVidangeDate}
+              onChange={(e) => setFormData((prev) => ({ ...prev, lastVidangeDate: e.target.value }))}
+            />
+          </div>
         </div>
       ),
     },

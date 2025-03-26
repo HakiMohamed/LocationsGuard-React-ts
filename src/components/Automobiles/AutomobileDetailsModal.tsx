@@ -1,9 +1,11 @@
+//components/Automobiles/AutomobileDetailsModal.tsx
 import React, { useState } from 'react';
 import { Automobile } from '../../types/automobile.types';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
-import { Carousel } from 'react-responsive-carousel';
 import "react-responsive-carousel/lib/styles/carousel.min.css";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCar, faDollarSign, faGasPump, faCogs, faChair, faCheckCircle, faTachometerAlt, faRoad, faOilCan, faBolt, faPalette, faShieldAlt } from '@fortawesome/free-solid-svg-icons';
 
 interface AutomobileDetailsModalProps {
   isOpen: boolean;
@@ -35,6 +37,21 @@ const AutomobileDetailsModal: React.FC<AutomobileDetailsModalProps> = ({ isOpen,
     e.preventDefault();
     e.stopPropagation();
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  const getInsuranceLabel = (type: string) => {
+    switch (type) {
+      case 'TIERS_SIMPLE':
+        return 'Tiers Simple';
+      case 'TIERS_ETENDU':
+        return 'Tiers Étendu';
+      case 'TOUS_RISQUES':
+        return 'Tous Risques';
+      case 'TOUS_RISQUES_PLUS':
+        return 'Tous Risques Plus';
+      default:
+        return type;
+    }
   };
 
   return (
@@ -124,7 +141,17 @@ const AutomobileDetailsModal: React.FC<AutomobileDetailsModalProps> = ({ isOpen,
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-4xl  transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all relative">
+                  {/* Close button */}
+                  <button
+                    onClick={handleClose}
+                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+
                   <Dialog.Title as="h3" className="text-xl font-bold leading-6 text-gray-900 border-b pb-3 mb-4">
                     {automobile.brand} {automobile.model} ({automobile.year})
                   </Dialog.Title>
@@ -194,62 +221,104 @@ const AutomobileDetailsModal: React.FC<AutomobileDetailsModalProps> = ({ isOpen,
                     {/* Details */}
                     <div className="space-y-3 overflow-y-auto max-h-80">
                       <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-sm text-gray-500 font-medium">Catégorie</p>
-                          <p className="text-gray-800">{automobile.category.name || 'N/A'}</p>
+                        <div className="bg-gray-50 p-3 rounded-lg flex items-center">
+                          <FontAwesomeIcon icon={faCar} className="text-gray-500 mr-2" />
+                          <div>
+                            <p className="text-sm text-gray-500 font-medium">Catégorie</p>
+                            <p className="text-gray-800">{automobile.category.name || 'N/A'}</p>
+                          </div>
                         </div>
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-sm text-gray-500 font-medium">Tarif journalier</p>
-                          <p className="text-gray-800 font-bold">{automobile.dailyRate} DH</p>
+                        <div className="bg-gray-50 p-3 rounded-lg flex items-center">
+                          <FontAwesomeIcon icon={faDollarSign} className="text-gray-500 mr-2" />
+                          <div>
+                            <p className="text-sm text-gray-500 font-medium">Tarif journalier</p>
+                            <p className="text-gray-800 font-bold">{automobile.dailyRate} DH</p>
+                          </div>
                         </div>
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-sm text-gray-500 font-medium">Carburant</p>
-                          <p className="text-gray-800">{automobile.fuelType}</p>
+                        <div className="bg-gray-50 p-3 rounded-lg flex items-center">
+                          <FontAwesomeIcon icon={faGasPump} className="text-gray-500 mr-2" />
+                          <div>
+                            <p className="text-sm text-gray-500 font-medium">Carburant</p>
+                            <p className="text-gray-800">{automobile.fuelType}</p>
+                          </div>
                         </div>
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-sm text-gray-500 font-medium">Transmission</p>
-                          <p className="text-gray-800">{automobile.transmission}</p>
+                        <div className="bg-gray-50 p-3 rounded-lg flex items-center">
+                          <FontAwesomeIcon icon={faCogs} className="text-gray-500 mr-2" />
+                          <div>
+                            <p className="text-sm text-gray-500 font-medium">Transmission</p>
+                            <p className="text-gray-800">{automobile.transmission}</p>
+                          </div>
                         </div>
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-sm text-gray-500 font-medium">Sièges</p>
-                          <p className="text-gray-800">{automobile.seats}</p>
+                        <div className="bg-gray-50 p-3 rounded-lg flex items-center">
+                          <FontAwesomeIcon icon={faChair} className="text-gray-500 mr-2" />
+                          <div>
+                            <p className="text-sm text-gray-500 font-medium">Sièges</p>
+                            <p className="text-gray-800">{automobile.seats}</p>
+                          </div>
                         </div>
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-sm text-gray-500 font-medium">Disponibilité</p>
-                          <p className={`${automobile.isAvailable ? 'text-green-600' : 'text-red-600'} font-medium`}>
-                            {automobile.isAvailable ? 'Disponible' : 'Indisponible'}
-                          </p>
+                        <div className="bg-gray-50 p-3 rounded-lg flex items-center">
+                          <FontAwesomeIcon icon={faCheckCircle} className={`text-gray-500 mr-2 ${automobile.isAvailable ? 'text-green-600' : 'text-red-600'}`} />
+                          <div>
+                            <p className="text-sm text-gray-500 font-medium">Disponibilité</p>
+                            <p className={`${automobile.isAvailable ? 'text-green-600' : 'text-red-600'} font-medium`}>
+                              {automobile.isAvailable ? 'Disponible' : 'Indisponible'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-lg flex items-center">
+                          <FontAwesomeIcon icon={faShieldAlt} className="text-gray-500 mr-2" />
+                          <div>
+                            <p className="text-sm text-gray-500 font-medium">Type d'assurance</p>
+                            <p className="text-gray-800">
+                              {automobile.insuranceType ? getInsuranceLabel(automobile.insuranceType) : 'Non spécifié'}
+                            </p>
+                          </div>
                         </div>
                       </div>
                       
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm text-gray-500 font-medium">Immatriculation</p>
-                        <p className="text-gray-800">{automobile.licensePlate}</p>
+                      <div className="bg-gray-50 p-3 rounded-lg flex items-center">
+                        <FontAwesomeIcon icon={faRoad} className="text-gray-500 mr-2" />
+                        <div>
+                          <p className="text-sm text-gray-500 font-medium">Immatriculation</p>
+                          <p className="text-gray-800">{automobile.licensePlate}</p>
+                        </div>
                       </div>
                       
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm text-gray-500 font-medium">Kilométrage</p>
-                        <p className="text-gray-800">{automobile.mileage} km</p>
+                      <div className="bg-gray-50 p-3 rounded-lg flex items-center">
+                        <FontAwesomeIcon icon={faTachometerAlt} className="text-gray-500 mr-2" />
+                        <div>
+                          <p className="text-sm text-gray-500 font-medium">Kilométrage</p>
+                          <p className="text-gray-800">{automobile.mileage} km</p>
+                        </div>
                       </div>
                       
                       {automobile.color && (
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-sm text-gray-500 font-medium">Couleur</p>
-                          <p className="text-gray-800">{automobile.color}</p>
+                        <div className="bg-gray-50 p-3 rounded-lg flex items-center">
+                          <FontAwesomeIcon icon={faPalette} className="text-gray-500 mr-2" />
+                          <div>
+                            <p className="text-sm text-gray-500 font-medium">Couleur</p>
+                            <p className="text-gray-800">{automobile.color}</p>
+                          </div>
                         </div>
                       )}
                       
                       {automobile.engineCapacity && (
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-sm text-gray-500 font-medium">Cylindrée</p>
-                          <p className="text-gray-800">{automobile.engineCapacity} cc</p>
+                        <div className="bg-gray-50 p-3 rounded-lg flex items-center">
+                          <FontAwesomeIcon icon={faBolt} className="text-gray-500 mr-2" />
+                          <div>
+                            <p className="text-sm text-gray-500 font-medium">Cylindrée</p>
+                            <p className="text-gray-800">{automobile.engineCapacity} cc</p>
+                          </div>
                         </div>
                       )}
                       
                       {automobile.fuelConsumption && (
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-sm text-gray-500 font-medium">Consommation</p>
-                          <p className="text-gray-800">{automobile.fuelConsumption} L/100km</p>
+                        <div className="bg-gray-50 p-3 rounded-lg flex items-center">
+                          <FontAwesomeIcon icon={faOilCan} className="text-gray-500 mr-2" />
+                          <div>
+                            <p className="text-sm text-gray-500 font-medium">Consommation</p>
+                            <p className="text-gray-800">{automobile.fuelConsumption} L/100km</p>
+                          </div>
                         </div>
                       )}
                     </div>

@@ -37,7 +37,6 @@ const TagInput: React.FC<TagInputProps> = ({ tags, onChange, placeholder = 'Ajou
       onChange([...tags, newTag]);
     }
     setInput('');
-    setIsDropdownOpen(false);
   };
 
   const removeTag = (indexToRemove: number) => {
@@ -81,12 +80,22 @@ const TagInput: React.FC<TagInputProps> = ({ tags, onChange, placeholder = 'Ajou
             className="w-full min-w-[120px] outline-none"
             placeholder={tags.length === 0 ? placeholder : ''}
           />
+          {isDropdownOpen && (
+            <button
+              type="button"
+              onClick={() => setIsDropdownOpen(false)}
+              className="absolute flex bg-gray-400 items-center gap-1 top-[-80px] right-0 mt-2 mr-2 p-2 text-white hover:bg-gray-500 transition-colors duration-200 rounded-full"
+            >
+              <span className="text-sm font-medium">Fermer</span>
+              <XMarkIcon className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Dropdown des features prédéfinies */}
       {isDropdownOpen && filteredFeatures.length > 0 && (
-        <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-60 overflow-auto">
+        <div className="absolute z-10 mt-1 w-full bg-white border border-2  border-blue-500 rounded-lg shadow-lg max-h-60 overflow-auto">
           {filteredFeatures.map((feature) => (
             <button
               key={feature}

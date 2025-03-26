@@ -30,12 +30,10 @@ export interface CreateReservationI {
   automobile: string;
   startDate: Date;
   endDate: Date;
-  totalPrice: number;
+  totalPrice?: number;
   status: ReservationStatus;
   notes?: string;
   isPaid: boolean;
-  createdAt: Date;
-  updatedAt: Date;
   paymentDate?: Date;
   cancellationReason?: string;
   category?: string;
@@ -45,6 +43,7 @@ export interface CreateReservationI {
 
 
 export interface UpdateReservationI {
+  automobile?: string;
   startDate?: Date;
   endDate?: Date;
   totalPrice?: number;

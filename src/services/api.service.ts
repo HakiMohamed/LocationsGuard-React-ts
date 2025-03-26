@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import AuthService from './auth.service';
 
-// Étendre le type pour inclure _retry
+
 declare module 'axios' {
   interface InternalAxiosRequestConfig {
     _retry?: boolean;
@@ -10,14 +10,14 @@ declare module 'axios' {
 
 const API_URL = import.meta.env.VITE_API_BACKEND || 'http://localhost:3000/api';
 
-// Variables pour gérer le rafraîchissement et la file d'attente
+
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (value?: string | null) => void;
   reject: (error?: unknown) => void;
 }> = [];
 
-// Fonction pour traiter la file d'attente
+
 const processQueue = (error: unknown = null, token: string | null = null) => {
   failedQueue.forEach(promise => {
     if (error) {
@@ -38,7 +38,7 @@ const api = axios.create({
   },
 });
 
-// Request interceptor
+
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token');
@@ -56,14 +56,14 @@ api.interceptors.request.use(
   }
 );
 
-// Pour le type de response.data
+
 interface ErrorResponse {
   error: {
     message: string;
   };
 }
 
-// Response interceptor
+
 api.interceptors.response.use(
     (response) => {
       console.log('Response:', response);

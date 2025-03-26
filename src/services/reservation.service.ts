@@ -1,5 +1,5 @@
 import api from './api.service';
-import { Reservation } from '../types/reservation.types';
+import { Reservation, ReservationStatus } from '../types/reservation.types';
 import { CreateReservationI, UpdateReservationI } from '../types/reservation.types';
 
 class ReservationService {
@@ -74,6 +74,28 @@ class ReservationService {
   async setPending(id: string): Promise<Reservation> {
     const response = await api.put(`${this.baseUrl}/${id}/pending`, {});
     return response.data;
+  }
+
+  async updateStatus(id: string, status: ReservationStatus): Promise<Reservation> {
+    const response = await api.put(`${this.baseUrl}/${id}/status`, { status });
+    return response.data;
+  }
+
+  async updatePaymentStatus(id: string, isPaid: boolean): Promise<Reservation> {
+    const response = await api.put(`${this.baseUrl}/${id}/isPayed`, { isPaid });
+    return response.data;
+  }
+
+  async getContract(id: string): Promise<Blob> {
+    try {
+      const response = await api.get(`${this.baseUrl}/${id}/contract`, {
+        responseType: 'blob'  // Important pour recevoir le PDF comme un blob
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching reservation contract:', error);
+      throw error;
+    }
   }
 }
 

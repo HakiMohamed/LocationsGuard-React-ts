@@ -22,6 +22,17 @@ import DatePickerModal from '../ui/DatePickerModal';
 
 
 
+interface FilterState {
+  brand: string;
+  minPrice: string;
+  maxPrice: string;
+  minYear: string;
+  maxYear: string;
+  transmission: string;
+  fuelType: string;
+  category: string;
+  insuranceType: string;
+}
 
 
 
@@ -30,6 +41,7 @@ interface ReservationModalProps {
   isOpen: boolean;
   onClose: () => void;
   reservation?: Reservation | null;
+  
 }
 
 interface ReservationFormData {
@@ -81,10 +93,17 @@ const FilterInputs: React.FC<FilterInputsProps> = ({ filters, setFilters, setCur
     }))
   ];
 
+  const insuranceTypeOptions = [
+    { value: 'TIERS_SIMPLE', label: 'Tiers Simple' },
+    { value: 'TIERS_ETENDU', label: 'Tiers Étendu' },
+    { value: 'TOUS_RISQUES', label: 'Tous Risques' },
+    { value: 'TOUS_RISQUES_PLUS', label: 'Tous Risques Plus' },
+  ];
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {/* Brand & Price Range */}
-      <div className="space-y-3">
+      <div className="space-y-1">
         <label className="block text-sm font-medium text-gray-700">Marque</label>
         <Select
           isClearable
@@ -196,6 +215,25 @@ const FilterInputs: React.FC<FilterInputsProps> = ({ filters, setFilters, setCur
           />
         </div>
       </div>
+
+      {/* Insurance Type */}
+      <div className="space-y-3">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Type d'assurance</label>
+          <Select
+            isClearable
+            options={insuranceTypeOptions}
+            value={insuranceTypeOptions.find(option => option.value === filters.insuranceType)}
+            onChange={(option) => {
+              setFilters(prev => ({ ...prev, insuranceType: option?.value || '' }));
+              setCurrentPage(1);
+            }}
+            placeholder="Sélectionner une assurance"
+            className="react-select-container"
+            classNamePrefix="react-select"
+          />
+        </div>
+      </div>
     </div>
   );
 };
@@ -211,7 +249,6 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
   const [searchTerm, setSearchTerm] = useState('');
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [reservedDates, setReservedDates] = useState<{start: Date, end: Date}[]>([]);
-  const [tooltipData, setTooltipData] = useState({ visible: false, text: '', position: { x: 0, y: 0 } });
   const [errorMessage, setErrorMessage] = useState("");
   
   // Pagination state
@@ -227,18 +264,43 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
     maxYear: '',
     transmission: '',
     fuelType: '',
-    category: ''
+    category: '',
+    insuranceType: ''
   });
   const [showFilters, setShowFilters] = useState(false);
 
+  // Initialize formData with existing reservation data if available
   const [formData, setFormData] = useState<ReservationFormData>({
     client: '',
     automobile: '',
-    startDate: null as Date | null,
-    endDate: null as Date | null,
+    startDate: null,
+    endDate: null,
     notes: '',
     status: 'PENDING'
   });
+
+  // Update formData when reservation changes
+  useEffect(() => {
+    if (reservation) {
+      setFormData({
+        client: reservation.client._id,
+        automobile: reservation.automobile._id,
+        startDate: new Date(reservation.startDate),
+        endDate: new Date(reservation.endDate),
+        notes: reservation.notes || '',
+        status: reservation.status
+      });
+    } else {
+      setFormData({
+        client: '',
+        automobile: '',
+        startDate: null,
+        endDate: null,
+        notes: '',
+        status: 'PENDING'
+      });
+    }
+  }, [reservation]);
 
   // Ajoutez ces états pour gérer l'affichage des modals de date
   const [isStartDateModalOpen, setIsStartDateModalOpen] = useState(false);
@@ -280,17 +342,34 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
     );
   };
 
-  const showTooltip = (text: string, e: React.MouseEvent) => {
-    setTooltipData({
-      visible: true,
-      text,
-      position: { x: e.clientX, y: e.clientY }
+  // Fonction pour réinitialiser tous les états
+  const resetStates = useCallback(() => {
+    setFormData({
+      client: '',
+      automobile: '',
+      startDate: null,
+      endDate: null,
+      notes: '',
+      status: 'PENDING'
     });
-  };
-
-  const hideTooltip = () => {
-    setTooltipData(prev => ({ ...prev, visible: false }));
-  };
+    setCurrentStep(1);
+    setSearchTerm('');
+    setClientSearchTerm('');
+    setErrorMessage('');
+    setFilters({
+      brand: '',
+      minPrice: '',
+      maxPrice: '',
+      minYear: '',
+      maxYear: '',
+      transmission: '',
+      fuelType: '',
+      category: '',
+      insuranceType: ''
+    });
+    setCurrentPage(1);
+    setShowFilters(false);
+  }, []);
 
   const handleSubmit = async () => {
     try {
@@ -302,9 +381,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
         client: formData.client,
         automobile: formData.automobile,
         notes: formData.notes,
-        // À calculer selon votre logique
-        isPaid: false,
-       
+        isPaid: reservation?.isPaid || false,
       };
 
       if (reservation) {
@@ -314,9 +391,10 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
         await createReservation(reservationData);
         toast.success('Réservation créée avec succès');
       }
+      resetStates();
       onClose();
     } catch (error) {
-      console.error('Erreur lors de la création de la réservation:', error);
+      console.error('Erreur lors de la création/mise à jour de la réservation:', error);
       toast.error('Une erreur est survenue');
     } finally {
       setLoading(false);
@@ -362,6 +440,11 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
         return false;
       }
       
+      // Apply insuranceType filter if specified
+      if (filters.insuranceType && auto.insuranceType !== filters.insuranceType) {
+        return false;
+      }
+      
       return true;
     });
   }, [filters]);
@@ -370,8 +453,8 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
   const getFilteredAndPaginatedAutomobiles = useCallback(() => {
     // Apply search filter first
     let filtered = automobiles?.filter(auto => 
-      auto.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      auto.model.toLowerCase().includes(searchTerm.toLowerCase())
+      (auto.brand?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (auto.model?.toLowerCase() || '').includes(searchTerm.toLowerCase())
     ) || [];
     
     // Then apply all other filters
@@ -502,11 +585,10 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
     {
       title: "Sélection du véhicule",
       content: (
-        <div className="space-y-6">
+        <div className="space-y-6 ">
           <div className="flex flex-col space-y-4 md:flex-row md:items-center md:space-y-0 md:space-x-4">
             <div className="relative flex-1">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
               </div>
               <Input
                 label="Recherche"
@@ -524,12 +606,12 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
             
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center justify-center px-4 py-3 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-all duration-300 shadow-md"
+              className="flex mt-10 items-center justify-center px-4 py-3 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 transition-all duration-300 shadow-md"
             >
               <FunnelIcon className="h-5 w-5 mr-2" />
               Filtres {showFilters ? "actifs" : ""}
               {Object.values(filters).some(value => value !== '') && !showFilters && (
-                <span className="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-indigo-600 rounded-full">
+                <span className="ml-2  inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-indigo-600 rounded-full">
                   {Object.values(filters).filter(value => value !== '').length}
                 </span>
               )}
@@ -553,7 +635,8 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
                       maxYear: '',
                       transmission: '',
                       fuelType: '',
-                      category: ''
+                      category: '',
+                      insuranceType: ''
                     });
                     setCurrentPage(1);
                   }}
@@ -592,10 +675,12 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
             {filteredAutomobiles?.length > 0 ? (
               filteredAutomobiles.map((auto, index) => (
                 <div
-                  key={auto._id}
+                  key={auto?._id}
                   onClick={() => {
-                    setFormData(prev => ({ ...prev, automobile: auto._id }));
-                    setErrorMessage("");
+                    if (auto?._id) {
+                      setFormData(prev => ({ ...prev, automobile: auto._id }));
+                      setErrorMessage("");
+                    }
                   }}
                   className={`
                     relative overflow-hidden rounded-2xl transition-all duration-300 
@@ -607,15 +692,15 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
                   `}
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  {auto.images && auto.images[0] ? (
+                  {auto?.images && auto.images[0] ? (
                     <div className="relative h-48 overflow-hidden rounded-t-2xl">
                       <img
                         src={auto.images[0]}
-                        alt={`${auto.brand} ${auto.model}`}
+                        alt={`${auto?.brand} ${auto?.model}`}
                         className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                       />
                       <div className="absolute top-0 right-0 bg-gradient-to-l from-indigo-600 to-indigo-500 text-white px-3 py-1 rounded-bl-lg text-sm font-medium">
-                        {categories.find(cat => cat._id === (typeof auto.category === 'string' ? auto.category : auto.category._id))?.name}
+                        {categories.find(cat => cat._id === (typeof auto.category === 'string' ? auto.category : auto.category?._id))?.name}
                       </div>
                       {formData.automobile === auto._id && (
                         <div className="absolute top-3 right-3 bg-indigo-600 text-white p-1.5 rounded-full shadow-md">
@@ -658,7 +743,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
                           {auto.seats} places
                         </span>
                       )}
-                      {auto.features.includes('Climatisation') && (
+                      {auto?.features?.includes('Climatisation') && (
                         <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md">
                           Climatisation
                         </span>
@@ -698,7 +783,8 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
                         maxYear: '',
                         transmission: '',
                         fuelType: '',
-                        category: ''
+                        category: '',
+                        insuranceType: ''
                       });
                       setSearchTerm('');
                       setCurrentPage(1);
@@ -823,12 +909,21 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
                 `}
               >
                 <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-900">
-                      {client.firstName} {client.lastName}
-                    </h3>
-                    <p className="text-sm text-gray-500">{client.email}</p>
-                    <p className="text-sm text-gray-500">{client.phoneNumber}</p>
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <span className="text-sm font-medium text-indigo-600">
+                          {client.firstName[0]}{client.lastName[0]}
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-900">
+                        {client.firstName} {client.lastName}
+                      </h3>
+                      <p className="text-sm text-gray-500">{client.email}</p>
+                      <p className="text-sm text-gray-500">{client.phoneNumber}</p>
+                    </div>
                   </div>
                   {formData.client === client._id && (
                     <CheckIcon className="h-5 w-5 text-indigo-600" />
@@ -900,7 +995,14 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
   return (
     <>
       <Transition appear show={isOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-50" onClose={onClose}>
+        <Dialog 
+          as="div" 
+          className="relative z-50" 
+          onClose={() => {
+            resetStates();
+            onClose();
+          }}
+        >
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -1019,25 +1121,6 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
         onClose={() => setIsClientModalOpen(false)}
         onSubmit={handleCreateClient}
       />
-
-      {tooltipData.visible && (
-        <div
-          style={{
-            position: 'fixed',
-            top: tooltipData.position.y + 20,
-            left: tooltipData.position.x + 20,
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            color: 'white',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            fontSize: '12px',
-            zIndex: 9999,
-            pointerEvents: 'none',
-          }}
-        >
-          {tooltipData.text}
-        </div>
-      )}
 
       <DatePickerModal
         isOpen={isStartDateModalOpen}

@@ -13,19 +13,27 @@ const ClientsPage: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+
   useEffect(() => {
     fetchClients();
   }, [fetchClients]);
 
-  // Assurez-vous que clients est un tableau avant de filtrer
+  // Reset to first page when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  // Filtered and sorted clients
   const filteredClients = Array.isArray(clients) ? clients.filter(client => 
     (client.firstName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
     (client.lastName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
     (client.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-    (client.phone || '').includes(searchTerm)
+    (client.phoneNumber || '').includes(searchTerm)
   ) : [];
 
-  // Tri des clients
   const sortedClients = [...filteredClients].sort((a, b) => {
     if (!sortConfig) return 0;
     const aVal = a[sortConfig.key] ?? '';
@@ -39,6 +47,65 @@ const ClientsPage: React.FC = () => {
     }
     return 0;
   });
+
+  // Pagination calculation
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = sortedClients.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(sortedClients.length / itemsPerPage);
+
+  // Change page
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+
+  // Go to next page
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // Go to previous page
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Function to determine which page buttons to show
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxPagesToShow = 5; // Show max 5 page numbers at once
+
+    if (totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      pageNumbers.push(1);
+      let startPage = Math.max(2, currentPage - 1);
+      let endPage = Math.min(startPage + 2, totalPages - 1);
+
+      if (endPage === totalPages - 1) {
+        startPage = Math.max(2, endPage - 2);
+      }
+
+      if (startPage > 2) {
+        pageNumbers.push('...');
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
+      }
+
+      if (endPage < totalPages - 1) {
+        pageNumbers.push('...');
+      }
+
+      pageNumbers.push(totalPages);
+    }
+
+    return pageNumbers;
+  };
 
   const handleDelete = async (id: string) => {
     try {
@@ -172,12 +239,12 @@ const ClientsPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {sortedClients.map((client) => (
+              {currentItems.map((client) => (
                 <tr key={client._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold">
+                        <div className="flex-shrink-0 h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-medium shadow-sm group-hover:scale-110 transition-transform duration-200">
                           {client.firstName[0]}{client.lastName[0]}
                         </div>
                       </div>
@@ -209,11 +276,6 @@ const ClientsPage: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> 
                     {client.phoneNumber || '-'}
                   </td>
-
-
-
-
-
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-2">
                       <button
@@ -221,11 +283,11 @@ const ClientsPage: React.FC = () => {
                           setSelectedClient(client);
                           setIsModalOpen(true);
                         }}
-                        className="text-blue-600 hover:text-blue-900 bg-blue-50 p-1.5 rounded-md transition-colors"
+                        className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                        </svg>
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                          </svg>
                       </button>
                       <button
                         onClick={() => {
@@ -246,6 +308,82 @@ const ClientsPage: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Pagination Controls */}
+      {sortedClients.length > 0 && (
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between bg-white px-4 py-3 rounded-lg shadow">
+          <div className="flex items-center mb-4 sm:mb-0">
+            <p className="text-sm text-gray-700">
+              Affichage de{' '}
+              <span className="font-medium">{indexOfFirstItem + 1}</span>{' '}
+              à{' '}
+              <span className="font-medium">
+                {Math.min(indexOfLastItem, sortedClients.length)}
+              </span>{' '}
+              sur{' '}
+              <span className="font-medium">{sortedClients.length}</span>{' '}
+              résultats
+            </p>
+            <div className="ml-4">
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1); // Reset to first page when changing items per page
+                }}
+                className="border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              >
+                <option value={5}>5 par page</option>
+                <option value={10}>10 par page</option>
+                <option value={20}>20 par page</option>
+                <option value={50}>50 par page</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex space-x-1">
+            <button
+              onClick={prevPage}
+              disabled={currentPage === 1}
+              className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md ${
+                currentPage === 1
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Précédent
+            </button>
+
+            {getPageNumbers().map((number, index) => (
+              <button
+                key={index}
+                onClick={() => typeof number === 'number' ? paginate(number) : null}
+                className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md ${
+                  number === currentPage
+                    ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                    : number === '...'
+                    ? 'bg-white text-gray-700'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+                disabled={number === '...'}
+              >
+                {number}
+              </button>
+            ))}
+
+            <button
+              onClick={nextPage}
+              disabled={currentPage === totalPages}
+              className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md ${
+                currentPage === totalPages
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Suivant
+            </button>
+          </div>
+        </div>
+      )}
 
       <ClientModal
         isOpen={isModalOpen}

@@ -5,6 +5,25 @@ export enum FuelType {
   HYBRID = 'HYBRID'
 }
 
+export enum InsuranceType {
+  TIERS_SIMPLE = 'TIERS_SIMPLE',           // Responsabilité Civile de base
+  TIERS_ETENDU = 'TIERS_ETENDU',          // RC + Incendie + Vol
+  TOUS_RISQUES = 'TOUS_RISQUES',          // Couverture complète
+  TOUS_RISQUES_PLUS = 'TOUS_RISQUES_PLUS' // Couverture complète + options supplémentaires
+}
+
+
+export interface ReservationStats {
+  reservationCount: number;
+  _id: string;
+  brand: string;
+  model: string;
+  year: number;
+  categoryName: string;
+  automobileId: string;
+  categoryId: string;
+}
+
 export enum TransmissionType {
   MANUAL = 'MANUAL',
   AUTOMATIC = 'AUTOMATIC',
@@ -38,6 +57,8 @@ export interface Automobile {
   fuelConsumption?: number;
   features: string[];
   description?: string;
+  insuranceType?: InsuranceType;
+  lastVidangeDate?: Date;
 }
 
 

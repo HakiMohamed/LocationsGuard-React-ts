@@ -20,22 +20,50 @@ import ClientsPage from './pages/admin/ClientsPage';
 import ProfilePage from './pages/admin/ProfilePage';
 import RequestPasswordReset from './pages/auth/RequestPasswordReset';
 import ResetPassword from './pages/auth/ResetPassword';
-// Composant pour protéger les routes privées
-const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
+import { MaintenanceProvider } from './contexts/MaintenanceContext';
+import MaintenancesPage from './pages/admin/MaintenancesPage';
+import HomePage from './pages/HomePage';
+
+// Composant pour protéger les routes admin
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   const token = localStorage.getItem('access_token');
 
-  console.log('PrivateRoute - Loading:', loading, 'Token exists:', !!token, 'User exists:', !!user);
+  console.log('AdminRoute - Loading:', loading, 'Token exists:', !!token, 'User exists:', !!user, 'Role:', user?.role);
 
   if (loading) {
     return <LoadingScreen />;
   }
 
-  return token && user ? children : <Navigate to="/login" replace />;
+  // Vérifier si l'utilisateur est connecté et a le rôle admin
+  if (token && user && user.role === 'admin') {
+    return <>{children}</>;
+  }
+  
+  // Rediriger vers /home si l'utilisateur n'est pas admin
+  return <Navigate to="/home" replace />;
 };
 
+// Route privée standard pour les utilisateurs connectés
+const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  const token = localStorage.getItem('access_token');
 
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
+  return token && user ? <>{children}</> : <Navigate to="/login" replace />;
+};
+
+// Composant pour rediriger en fonction du rôle
+const RoleBasedRedirect = () => {
+  const { user } = useAuth();
+  
+  return user?.role === 'admin' ? 
+    <Navigate to="/admin" replace /> : 
+    <Navigate to="/home" replace />;
+};
 
 function App() {
   const { isDark } = useTheme();
@@ -49,29 +77,38 @@ function App() {
             <CategoryProvider>
               <ReservationProvider>
                 <ClientProvider>
-              <Routes>
-                {/* Redirection de la racine vers /admin */}
-                <Route path="/" element={<Navigate to="/admin" replace />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/verify-email" element={<VerifyEmail />} />
-                <Route path="/auth/verify-email" element={<EmailVerification />} />
-                <Route path="/admin" element={ <PrivateRoute> <DashboardLayout />
-                </PrivateRoute>}>
-                  <Route index element={<Navigate to="/admin/dashboard" replace />} />
-                  <Route path="dashboard" element={<Dashboard />} />
-                  <Route path="clients" element={<ClientsPage />} />
-                  <Route path="automobiles" element={<AutomobilesPage />} />
-                  <Route path="categories" element={<CategoriesPage />} />
-                  <Route path="reservations" element={<ReservationsPage />} />
-                  <Route path="profile" element={<ProfilePage />} />
-                </Route>
-                <Route path="/request-password-reset" element={<RequestPasswordReset />} />
-                <Route path="auth/reset-password" element={<ResetPassword />} />
-                {/* Route 404 */}
-                <Route path="*" element={<Navigate to="/admin" replace />} />
-              </Routes>
-              </ClientProvider>
+                  <MaintenanceProvider>
+                    <Routes>
+                      {/* Redirection de la racine vers /home ou /admin selon le rôle */}
+                      <Route path="/" element={<PrivateRoute><RoleBasedRedirect /></PrivateRoute>} />
+                      
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<Register />} />
+                      <Route path="/verify-email" element={<VerifyEmail />} />
+                      <Route path="/auth/verify-email" element={<EmailVerification />} />
+                      <Route path="/request-password-reset" element={<RequestPasswordReset />} />
+                      <Route path="auth/reset-password" element={<ResetPassword />} />
+                      
+                      {/* Page d'accueil pour les utilisateurs non-admin */}
+                      <Route path="/home" element={<PrivateRoute><HomePage /></PrivateRoute>} />
+                      
+                      {/* Routes admin protégées */}
+                      <Route path="/admin" element={<AdminRoute><DashboardLayout /></AdminRoute>}>
+                        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                        <Route path="dashboard" element={<Dashboard />} />
+                        <Route path="clients" element={<ClientsPage />} />
+                        <Route path="automobiles" element={<AutomobilesPage />} />
+                        <Route path="categories" element={<CategoriesPage />} />
+                        <Route path="reservations" element={<ReservationsPage />} />
+                        <Route path="profile" element={<ProfilePage />} />
+                        <Route path="maintenances" element={<MaintenancesPage />} />
+                      </Route>
+                      
+                      {/* Route 404 */}
+                      <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                  </MaintenanceProvider>
+                </ClientProvider>
               </ReservationProvider>
             </CategoryProvider>
           </AutomobileProvider>
