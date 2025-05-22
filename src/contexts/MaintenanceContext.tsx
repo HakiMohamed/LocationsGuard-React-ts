@@ -1,20 +1,20 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { Maintenance, MaintenanceWithNextDetails, MaintenanceTypeInfo, MaintenanceSchedule } from '../types/maintenance.types';
-import { maintenanceService } from '../services/maintenance.service';
+import { Maintenance, MaintenanceWithNextDetails } from '../types/maintenance.types';
+import { maintenanceService, CreateMaintenancePayload } from '../services/maintenance.service';
 
 interface MaintenanceContextProps {
   maintenances: MaintenanceWithNextDetails[];
   loading: boolean;
   error: string | null;
   fetchMaintenances: () => Promise<void>;
-  createMaintenance: (formData: FormData) => Promise<Maintenance>;
-  updateMaintenance: (id: string, formData: FormData) => Promise<Maintenance>;
+  createMaintenance: (data: CreateMaintenancePayload) => Promise<Maintenance>;
+  updateMaintenance: (id: string, data: CreateMaintenancePayload) => Promise<Maintenance>;
   deleteMaintenance: (id: string) => Promise<void>;
   getMaintenancesByAutomobile: (automobileId: string) => Promise<Maintenance[]>;
-  getDueMaintenances: () => Promise<Maintenance[]>;
-  getUpcomingMaintenances: () => Promise<Maintenance[]>;
-  getApplicableMaintenanceTypes: (automobileId: string) => Promise<MaintenanceTypeInfo[]>;
-  suggestMaintenanceSchedule: (automobileId: string) => Promise<MaintenanceSchedule>;
+  getMaintenanceAlerts: () => Promise<any[]>;
+  getDueMaintenances: () => Promise<MaintenanceWithNextDetails[]>;
+  getUpcomingMaintenances: () => Promise<MaintenanceWithNextDetails[]>;
+  completeMaintenance: (id: string, date?: string, mileage?: number) => Promise<Maintenance>;
 }
 
 const MaintenanceContext = createContext<MaintenanceContextProps | undefined>(undefined);
@@ -29,7 +29,7 @@ export const MaintenanceProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setError(null);
     try {
       const data = await maintenanceService.getAll();
-      setMaintenances(data);
+      setMaintenances(data as MaintenanceWithNextDetails[]);
     } catch (error) {
       console.error('Error fetching maintenances:', error);
       setError('Erreur lors du chargement des maintenances');
@@ -38,9 +38,9 @@ export const MaintenanceProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, []);
 
-  const createMaintenance = async (formData: FormData): Promise<Maintenance> => {
+  const createMaintenance = async (data: CreateMaintenancePayload): Promise<Maintenance> => {
     try {
-      const createdMaintenance = await maintenanceService.create(formData);
+      const createdMaintenance = await maintenanceService.create(data);
       await fetchMaintenances();
       return createdMaintenance;
     } catch (error) {
@@ -49,9 +49,9 @@ export const MaintenanceProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   };
 
-  const updateMaintenance = async (id: string, formData: FormData): Promise<Maintenance> => {
+  const updateMaintenance = async (id: string, data: CreateMaintenancePayload): Promise<Maintenance> => {
     try {
-      const updatedMaintenance = await maintenanceService.update(id, formData);
+      const updatedMaintenance = await maintenanceService.update(id, data);
       await fetchMaintenances();
       return updatedMaintenance;
     } catch (error) {
@@ -79,7 +79,16 @@ export const MaintenanceProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   };
 
-  const getDueMaintenances = async (): Promise<Maintenance[]> => {
+  const getMaintenanceAlerts = async (): Promise<any[]> => {
+    try {
+      return await maintenanceService.getMaintenanceAlerts();
+    } catch (error) {
+      console.error('Error fetching maintenance alerts:', error);
+      throw error;
+    }
+  };
+
+  const getDueMaintenances = async (): Promise<MaintenanceWithNextDetails[]> => {
     try {
       return await maintenanceService.getDueMaintenances();
     } catch (error) {
@@ -88,7 +97,7 @@ export const MaintenanceProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   };
 
-  const getUpcomingMaintenances = async (): Promise<Maintenance[]> => {
+  const getUpcomingMaintenances = async (): Promise<MaintenanceWithNextDetails[]> => {
     try {
       return await maintenanceService.getUpcomingMaintenances();
     } catch (error) {
@@ -97,20 +106,13 @@ export const MaintenanceProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   };
 
-  const getApplicableMaintenanceTypes = async (automobileId: string): Promise<MaintenanceTypeInfo[]> => {
+  const completeMaintenance = async (id: string, date?: string, mileage?: number): Promise<Maintenance> => {
     try {
-      return await maintenanceService.getApplicableMaintenanceTypes(automobileId);
+      const updated = await maintenanceService.completeMaintenance(id, date, mileage);
+      await fetchMaintenances();
+      return updated;
     } catch (error) {
-      console.error('Error fetching applicable maintenance types:', error);
-      throw error;
-    }
-  };
-
-  const suggestMaintenanceSchedule = async (automobileId: string): Promise<MaintenanceSchedule> => {
-    try {
-      return await maintenanceService.suggestMaintenanceSchedule(automobileId);
-    } catch (error) {
-      console.error('Error fetching maintenance schedule suggestion:', error);
+      console.error('Error completing maintenance:', error);
       throw error;
     }
   };
@@ -128,10 +130,10 @@ export const MaintenanceProvider: React.FC<{ children: React.ReactNode }> = ({ c
     updateMaintenance,
     deleteMaintenance,
     getMaintenancesByAutomobile,
+    getMaintenanceAlerts,
     getDueMaintenances,
     getUpcomingMaintenances,
-    getApplicableMaintenanceTypes,
-    suggestMaintenanceSchedule
+    completeMaintenance
   };
 
   return (

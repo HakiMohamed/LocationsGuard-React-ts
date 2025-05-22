@@ -41,7 +41,8 @@ interface ReservationModalProps {
   isOpen: boolean;
   onClose: () => void;
   reservation?: Reservation | null;
-  
+  onSubmit: (reservationData: ReservationFormData) => void;
+  preSelectedAutomobileId?: string;
 }
 
 interface ReservationFormData {
@@ -238,7 +239,13 @@ const FilterInputs: React.FC<FilterInputsProps> = ({ filters, setFilters, setCur
   );
 };
 
-const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, reservation }) => {
+const ReservationModal: React.FC<ReservationModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onSubmit, 
+  reservation,
+  preSelectedAutomobileId 
+}) => {
   const { createReservation, updateReservation, getReservationsByAutomobile } = useReservation();
   const { automobiles, fetchAutomobiles } = useAutomobile();
   const { clients, fetchClients, createClient } = useClient();
@@ -248,6 +255,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [clientSearchTerm, setClientSearchTerm] = useState('');
+  const [reservations, setReservations] = useState<Reservation[]>([]);
   const [reservedDates, setReservedDates] = useState<{start: Date, end: Date}[]>([]);
   const [errorMessage, setErrorMessage] = useState("");
   
@@ -317,6 +325,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
       const fetchReservedDates = async () => {
         try {
           const carReservations = await getReservationsByAutomobile(formData.automobile);
+          setReservations(carReservations); // Store full reservations data
           const dates = carReservations.map((res: Reservation) => ({
             start: parseISO(res.startDate.toString()),
             end: parseISO(res.endDate.toString())
@@ -337,9 +346,19 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
       return false;
     }
     
-    return reservedDates.some(interval => 
-      isWithinInterval(date, { start: interval.start, end: interval.end })
-    );
+    // Pour chaque intervalle réservé, vérifier toutes les réservations sur cet intervalle
+    return reservedDates.some(interval => {
+      // Trouver toutes les réservations qui ont exactement ce start/end
+      const reservationsForInterval = reservations.filter(r =>
+        new Date(r.startDate).getTime() === interval.start.getTime() &&
+        new Date(r.endDate).getTime() === interval.end.getTime()
+      );
+      // Si au moins une est CONFIRMED ou COMPLETED, bloquer la date
+      const hasConfirmedOrCompleted = reservationsForInterval.some(r =>
+        r.status === ReservationStatus.CONFIRMED || r.status === ReservationStatus.COMPLETED
+      );
+      return hasConfirmedOrCompleted && isWithinInterval(date, { start: interval.start, end: interval.end });
+    });
   };
 
   // Fonction pour réinitialiser tous les états
@@ -375,8 +394,8 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
     try {
       setLoading(true);
       const reservationData = {
-        startDate: formData.startDate || new Date(),
-        endDate: formData.endDate || new Date(),
+        startDate: formData.startDate?.toISOString() || new Date().toISOString(),
+        endDate: formData.endDate?.toISOString() || new Date().toISOString(),
         status: formData.status as ReservationStatus,
         client: formData.client,
         automobile: formData.automobile,
@@ -477,10 +496,31 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
 
   const { autos: filteredAutomobiles, totalPages, totalItems } = getFilteredAndPaginatedAutomobiles();
 
-  const filteredClients = clients?.filter(client => 
-    `${client.firstName} ${client.lastName}`.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(clientSearchTerm.toLowerCase())
-  );
+  // Ajout des états pour la pagination des clients
+  const [clientCurrentPage, setClientCurrentPage] = useState(1);
+  const [clientsPerPage, setClientsPerPage] = useState(6);
+
+  // Logique de filtrage et pagination des clients
+  const getFilteredAndPaginatedClients = useCallback(() => {
+    // Appliquer la recherche sur tous les champs
+    const filtered = clients?.filter(client => 
+      `${client.firstName} ${client.lastName}`.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+      client.email.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+      client.phoneNumber.toLowerCase().includes(clientSearchTerm.toLowerCase())
+    ) || [];
+    
+    // Calculer les indices pour la pagination
+    const startIndex = (clientCurrentPage - 1) * clientsPerPage;
+    const endIndex = Math.min(startIndex + clientsPerPage, filtered.length);
+    
+    return {
+      clients: filtered.slice(startIndex, endIndex),
+      totalPages: Math.ceil(filtered.length / clientsPerPage),
+      totalItems: filtered.length
+    };
+  }, [clients, clientSearchTerm, clientCurrentPage, clientsPerPage]);
+
+  const { clients: paginatedClients, totalPages: clientTotalPages, totalItems: clientTotalItems } = getFilteredAndPaginatedClients();
 
   const handleCreateClient = async (clientData: FormData) => {
     try {
@@ -856,7 +896,7 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
                       disabled={currentPage === totalPages}
                       className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
                     >
-                      <span className="sr-only">Suivant</span>
+                      <span className ="sr-only">Suivant</span>
                       <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
                     </button>
                   </nav>
@@ -880,8 +920,11 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
           <div className="flex items-center space-x-4">
             <SearchInput
               value={clientSearchTerm}
-              onChange={(value: string) => setClientSearchTerm(value)}
-              placeholder="Rechercher un client..."
+              onChange={(value: string) => {
+                setClientSearchTerm(value);
+                setClientCurrentPage(1);
+              }}
+              placeholder="Rechercher par nom, email ou téléphone..."
               className="flex-1"
             />
             <button
@@ -893,15 +936,38 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
             </button>
           </div>
 
+          {/* Info résultats */}
+          <div className="flex justify-between items-center text-sm text-gray-500">
+            <div>
+              {clientTotalItems} client{clientTotalItems !== 1 ? 's' : ''} trouvé{clientTotalItems !== 1 ? 's' : ''}
+            </div>
+            <div className="flex items-center space-x-2">
+              <span>Afficher:</span>
+              <select
+                value={clientsPerPage}
+                onChange={(e) => {
+                  setClientsPerPage(Number(e.target.value));
+                  setClientCurrentPage(1);
+                }}
+                className="rounded border-gray-200 text-sm"
+              >
+                <option value={6}>6</option>
+                <option value={12}>12</option>
+                <option value={24}>24</option>
+              </select>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredClients?.map((client) => (
+            {paginatedClients?.map((client) => (
               <div
                 key={client._id}
                 onClick={() => {
                   setFormData(prev => ({ ...prev, client: client._id }));
                   setErrorMessage("");
                 }}
-                className={`                  p-4 rounded-xl cursor-pointer transition-all duration-300
+                className={`
+                  p-4 rounded-xl cursor-pointer transition-all duration-300
                   ${formData.client === client._id
                     ? 'ring-2 ring-indigo-500 bg-indigo-50 transform scale-[1.02]'
                     : 'bg-white hover:bg-gray-50'
@@ -932,6 +998,73 @@ const ReservationModal: React.FC<ReservationModalProps> = ({ isOpen, onClose, re
               </div>
             ))}
           </div>
+
+          {/* Pagination des clients */}
+          {clientTotalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 sm:px-6 mt-6">
+              <div className="flex flex-1 justify-between sm:hidden">
+                <button
+                  onClick={() => setClientCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={clientCurrentPage === 1}
+                  className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Précédent
+                </button>
+                <button
+                  onClick={() => setClientCurrentPage(prev => Math.min(prev + 1, clientTotalPages))}
+                  disabled={clientCurrentPage === clientTotalPages}
+                  className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Suivant
+                </button>
+              </div>
+              <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Affichage de <span className="font-medium">{(clientCurrentPage - 1) * clientsPerPage + 1}</span> à{' '}
+                    <span className="font-medium">{Math.min(clientCurrentPage * clientsPerPage, clientTotalItems)}</span> sur{' '}
+                    <span className="font-medium">{clientTotalItems}</span> résultats
+                  </p>
+                </div>
+                <div>
+                  <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                    <button
+                      onClick={() => setClientCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={clientCurrentPage === 1}
+                      className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                    >
+                      <span className="sr-only">Précédent</span>
+                      <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
+                    </button>
+                    
+                    {/* Numéros de page */}
+                    {[...Array(clientTotalPages)].map((_, i) => (
+                      <button
+                        key={i + 1}
+                        onClick={() => setClientCurrentPage(i + 1)}
+                        className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                          clientCurrentPage === i + 1
+                            ? 'z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+                            : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0'
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                    
+                    <button
+                      onClick={() => setClientCurrentPage(prev => Math.min(prev + 1, clientTotalPages))}
+                      disabled={clientCurrentPage === clientTotalPages}
+                      className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                    >
+                      <span className="sr-only">Suivant</span>
+                      <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
+                    </button>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          )}
 
           {errorMessage && (
             <div className="mt-4 p-4 bg-red-50 rounded-lg">

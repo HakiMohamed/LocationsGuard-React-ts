@@ -1,19 +1,40 @@
 import { Automobile } from './automobile.types';
 
 export enum MaintenanceType {
-  OIL_CHANGE = 'OIL_CHANGE',
-  TIRE_CHANGE = 'TIRE_CHANGE',
-  BRAKE_SERVICE = 'BRAKE_SERVICE',
-  FILTER_CHANGE = 'FILTER_CHANGE',
-  BATTERY_REPLACEMENT = 'BATTERY_REPLACEMENT',
-  GENERAL_INSPECTION = 'GENERAL_INSPECTION',
-  COOLING_SYSTEM = 'COOLING_SYSTEM',
-  TRANSMISSION_SERVICE = 'TRANSMISSION_SERVICE',
-  SUSPENSION_CHECK = 'SUSPENSION_CHECK',
-  ELECTRICAL_SYSTEM = 'ELECTRICAL_SYSTEM',
-  AIR_CONDITIONING = 'AIR_CONDITIONING',
-  OTHER = 'OTHER'
+  VIDANGE = 'VIDANGE',
+  FILTRE_AIR = 'FILTRE_AIR',
+  FILTRE_HUILE = 'FILTRE_HUILE',
+  FILTRE_CARBURANT = 'FILTRE_CARBURANT',
+  FREINS = 'FREINS',
+  PNEUS = 'PNEUS',
+  COURROIE_DISTRIBUTION = 'COURROIE_DISTRIBUTION',
+  LIQUIDE_REFROIDISSEMENT = 'LIQUIDE_REFROIDISSEMENT',
+  BOUGIES_ALLUMAGE = 'BOUGIES_ALLUMAGE',
+  BATTERIE = 'BATTERIE',
+  CLIMATISATION = 'CLIMATISATION',
+  ESSUIE_GLACES = 'ESSUIE_GLACES',
+  CONTROLE_TECHNIQUE = 'CONTROLE_TECHNIQUE',
+  NETTOYAGE = 'NETTOYAGE',
+  FEUX_AMPLOULES = 'FEUX_AMPLOULES',
+  SUSPENSION_DIRECTION = 'SUSPENSION_DIRECTION',
+  NIVEAUX = 'NIVEAUX',
+  ADBLUE = 'ADBLUE',
+  FILTRE_HABITACLE = 'FILTRE_HABITACLE',
+  GEOMETRIE = 'GEOMETRIE',
+  COURROIE_ACCESSOIRES = 'COURROIE_ACCESSOIRES',
+  AMORTISSEURS = 'AMORTISSEURS',
+  ROTULES = 'ROTULES',
+  CARDANS = 'CARDANS',
+  REVISION_GENERALE = 'REVISION_GENERALE',
+  VIDANGE_BOITE_VITESSES = 'VIDANGE_BOITE_VITESSES',
+  POMPE_EAU = 'POMPE_EAU',
+  THERMOSTAT = 'THERMOSTAT',
+  RADIATEUR = 'RADIATEUR',
+  ALTERNATEUR = 'ALTERNATEUR',
+  DEMARREUR = 'DEMARREUR',
+  CAPTEURS = 'CAPTEURS',
 }
+
 
 export enum MaintenanceStatus {
   SCHEDULED = 'SCHEDULED',
@@ -24,38 +45,22 @@ export enum MaintenanceStatus {
 
 export interface Maintenance {
   _id: string;
-  automobile: Automobile | string;
+  automobile: string | { _id: string; brand: string; model: string };
   type: MaintenanceType;
-  status: MaintenanceStatus;
-  completedDate?: Date;
   description?: string;
+  date?: string;
   cost?: number;
-  mileageAtMaintenance?: number;
-  nextDueMileage?: number;
-  nextDueDate?: Date;
+  technician?: string;
   notes?: string;
-  performedBy?: string;
-  attachments?: string[];
-  notificationSent?: boolean;
-  partsReplaced?: string[];
-  laborHours?: number;
-  warranty?: string;
-  oilType?: string;
-  oilBrand?: string;
-  oilQuantity?: number;
-  createdAt?: Date;
-  updatedAt?: Date;
+  client?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 }
 
 export interface MaintenanceWithNextDetails extends Maintenance {
-  nextMaintenance?: {
-    dueMileage: number;
-    dueDate: Date;
-    mileageUntilDue: number;
-    daysUntilDue: number;
-    estimatedDate?: Date;
-    status: 'OVERDUE' | 'URGENT' | 'UPCOMING' | 'OK';
-  };
+  nextMaintenanceDate?: string;
+  nextMaintenanceKilometers?: number;
 }
 
 export interface MaintenanceRule {
@@ -96,4 +101,15 @@ export interface MaintenanceSchedule {
     estimatedMileage: number;
     reason: string;
   }[];
+}
+
+export interface CreateMaintenancePayload {
+  automobile: string;
+  type: MaintenanceType;
+  description?: string;
+  date?: string;
+  cost?: number;
+  technician?: string;
+  notes?: string;
+  client?: string;
 }

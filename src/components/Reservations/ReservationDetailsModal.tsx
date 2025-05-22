@@ -59,7 +59,7 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
       setCurrentStatus(newStatus);
       await fetchReservations();
     } catch (error) {
-      toast.error('Erreur lors de la mise à jour du statut');
+      toast.error('Erreur lors de la mise à jour du statut' + error);
     } finally {
       setIsUpdating(false);
     }
@@ -137,20 +137,28 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                           <div className="flex justify-between">
                             <p className="text-sm text-gray-500">Nom complet</p>
                             <p className="font-medium text-right">
-                              {reservation?.client ? `${reservation.client.firstName} ${reservation.client.lastName}` : 'Non spécifié'}
+                              {reservation?.client
+                                ? `${reservation.client.firstName || 'N/A'} ${reservation.client.lastName || 'N/A'}`
+                                : 'N/A'}
                             </p>
                           </div>
                           <div className="flex justify-between">
                             <p className="text-sm text-gray-500">Email</p>
-                            <p className="font-medium text-right">{reservation?.client?.email || 'Aucun email'}</p>
+                            <p className="font-medium text-right">
+                              {reservation?.client?.email || 'N/A'}
+                            </p>
                           </div>
                           <div className="flex justify-between">
                             <p className="text-sm text-gray-500">Téléphone</p>
-                            <p className="font-medium text-right">{reservation?.client?.phoneNumber || 'Aucun téléphone'}</p>
+                            <p className="font-medium text-right">
+                              {reservation?.client?.phoneNumber || 'N/A'}
+                            </p>
                           </div>
                           <div className="flex justify-between">
                             <p className="text-sm text-gray-500">Permis de conduire</p>
-                            <p className="font-medium text-right">{reservation.client.drivingLicenseNumber}</p>
+                            <p className="font-medium text-right">
+                              {reservation?.client?.drivingLicenseNumber || 'N/A'}
+                            </p>
                           </div>
                         </div>
                       </div>

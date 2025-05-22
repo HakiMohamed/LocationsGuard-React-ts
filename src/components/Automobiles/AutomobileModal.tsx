@@ -95,6 +95,10 @@ const AutomobileModal: React.FC<AutomobileModalProps> = ({ isOpen, onClose, onSu
 
   // Handle image file changes
   const handleFilesChange = (newFiles: File[]) => {
+    if (newFiles.length > 9) {
+      toast.error('Vous ne pouvez pas ajouter plus de 9 images. Veuillez retirer des images si nécessaire.');
+      return;
+    }
     setFiles(newFiles);
   };
 

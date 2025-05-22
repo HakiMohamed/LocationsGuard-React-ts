@@ -68,7 +68,7 @@ export default function VerifyEmail() {
             variant="outline"
             onClick={handleResendEmail}
             isLoading={isResending}
-            className="w-full"
+            className="w-full text-white"
           >
             Resend verification email
           </Button>

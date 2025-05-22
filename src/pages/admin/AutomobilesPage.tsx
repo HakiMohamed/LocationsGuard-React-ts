@@ -1,5 +1,5 @@
 //pages/admin/AutomobilesPage.tsx
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useAutomobile } from '../../contexts/AutomobileContext';
 import { Automobile, Category } from '../../types/automobile.types';
 import { toast } from 'react-hot-toast';
@@ -133,6 +133,8 @@ const AutomobilesPage: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [automobileToDelete, setAutomobileToDelete] = useState<Automobile | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchAutomobiles();
@@ -275,25 +277,27 @@ const AutomobilesPage: React.FC = () => {
   }) || [])).filter(Boolean).sort((a, b) => parseInt(b) - parseInt(a));
 
   // Apply filters and search
-  const filteredAutomobiles = Array.isArray(automobilesWithCategories) ? automobilesWithCategories.filter(automobile => {
-    const matchesSearch = !searchTerm || 
-      (automobile.brand && automobile.brand.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (automobile.model && automobile.model.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (automobile.licensePlate && automobile.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesBrand = !filters.brand || automobile.brand === filters.brand;
-    
-    const categoryName = typeof automobile.category === 'object' && automobile.category !== null 
-      ? automobile.category.name 
-      : '';
-    const matchesCategory = !filters.category || categoryName === filters.category;
-    
-    const matchesYear = !filters.year || automobile.year?.toString() === filters.year;
-    const matchesAvailability = !filters.isAvailable || 
-      (filters.isAvailable === 'true' ? automobile.isAvailable : !automobile.isAvailable);
-    
-    return matchesSearch && matchesBrand && matchesCategory && matchesYear && matchesAvailability;
-  }) : [];
+  const filteredAutomobiles = useMemo(() => {
+    return Array.isArray(automobilesWithCategories) ? automobilesWithCategories.filter(automobile => {
+      const matchesSearch = !searchTerm || 
+        (automobile.brand && automobile.brand.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (automobile.model && automobile.model.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (automobile.licensePlate && automobile.licensePlate.toLowerCase().includes(searchTerm.toLowerCase()));
+      
+      const matchesBrand = !filters.brand || automobile.brand === filters.brand;
+      
+      const categoryName = typeof automobile.category === 'object' && automobile.category !== null 
+        ? automobile.category.name 
+        : '';
+      const matchesCategory = !filters.category || categoryName === filters.category;
+      
+      const matchesYear = !filters.year || automobile.year?.toString() === filters.year;
+      const matchesAvailability = !filters.isAvailable || 
+        (filters.isAvailable === 'true' ? automobile.isAvailable : !automobile.isAvailable);
+      
+      return matchesSearch && matchesBrand && matchesCategory && matchesYear && matchesAvailability;
+    }) : [];
+  }, [automobilesWithCategories, searchTerm, filters]);
 
   // Apply sorting
   if (sortConfig !== null) {
@@ -348,8 +352,14 @@ const AutomobilesPage: React.FC = () => {
     setSearchTerm('');
   };
 
+  // Calcul des automobiles paginées
+  const paginatedAutomobiles = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredAutomobiles.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAutomobiles, currentPage]);
+
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto ">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div className="w-full sm:w-auto space-y-4">
@@ -568,7 +578,7 @@ const AutomobilesPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredAutomobiles.map((automobile) => (
+                {paginatedAutomobiles.map((automobile) => (
                   <tr key={automobile._id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -664,44 +674,63 @@ const AutomobilesPage: React.FC = () => {
       </div>
 
       {/* Pagination - can be added if needed */}
-      {filteredAutomobiles.length > 0 && (
-        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-4 rounded-lg shadow">
-          <div className="flex-1 flex justify-between sm:hidden">
-            <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-              Précédent
-            </button>
-            <button className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-              Suivant
-            </button>
-          </div>
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Affichage de <span className="font-medium">1</span> à <span className="font-medium">{filteredAutomobiles.length}</span> sur <span className="font-medium">{filteredAutomobiles.length}</span> résultats
-              </p>
-            </div>
-            <div>
-              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                <button className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                  <span className="sr-only">Précédent</span>
-                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </button>
-                <button aria-current="page" className="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                  1
-                </button>
-                <button className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                  <span className="sr-only">Suivant</span>
-                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              </nav>
-            </div>
-          </div>
+      <div className="bg-white px-4 py-3 flex flex-col sm:flex-row items-center justify-between border-t border-gray-200 sm:px-6 mt-4 rounded-lg shadow">
+        <div className="flex-1 flex justify-between items-center mb-4 sm:mb-0">
+          <p className="text-sm text-gray-700">
+            Affichage de <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span> à{' '}
+            <span className="font-medium">
+              {Math.min(currentPage * itemsPerPage, filteredAutomobiles.length)}
+            </span>{' '}
+            sur <span className="font-medium">{filteredAutomobiles.length}</span> résultats
+          </p>
         </div>
-      )}
+        
+        <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className={`relative inline-flex items-center px-2 py-2 rounded-l-md border ${
+              currentPage === 1 
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                : 'bg-white text-gray-500 hover:bg-gray-50'
+            } text-sm font-medium`}
+          >
+            <span className="sr-only">Précédent</span>
+            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          </button>
+          
+          {Array.from({ length: Math.ceil(filteredAutomobiles.length / itemsPerPage) }, (_, i) => (
+            <button
+              key={i + 1}
+              onClick={() => setCurrentPage(i + 1)}
+              className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                currentPage === i + 1
+                  ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                  : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+              }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+          
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredAutomobiles.length / itemsPerPage)))}
+            disabled={currentPage === Math.ceil(filteredAutomobiles.length / itemsPerPage)}
+            className={`relative inline-flex items-center px-2 py-2 rounded-r-md border ${
+              currentPage === Math.ceil(filteredAutomobiles.length / itemsPerPage)
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-white text-gray-500 hover:bg-gray-50'
+            } text-sm font-medium`}
+          >
+            <span className="sr-only">Suivant</span>
+            <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </nav>
+      </div>
 
       {/* Modal */}
       <AutomobileModal

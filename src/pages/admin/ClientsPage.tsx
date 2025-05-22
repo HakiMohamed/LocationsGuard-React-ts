@@ -166,7 +166,7 @@ const ClientsPage: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto ">
       {/* En-tête */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div className="w-full sm:w-auto space-y-4">

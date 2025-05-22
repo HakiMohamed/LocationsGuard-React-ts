@@ -5,7 +5,7 @@ import { CreateReservationI, UpdateReservationI } from '../types/reservation.typ
 class ReservationService {
   private readonly baseUrl = '/reservations';
 
-  async getAll(): Promise<Reservation[]> {
+  async getAll(): Promise<Reservation[]> {  
     try {
       const response = await api.get(this.baseUrl);
       return response.data?.data?.data || [];

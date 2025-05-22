@@ -70,12 +70,12 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
   const renderCalendarHeader = () => {
     const weekDays = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
     return (
-      <div className="grid grid-cols-7 mb-2">
+      <div className="grid grid-cols-7 mb-4">
         {weekDays.map((day, index) => (
           <div
             key={day}
-            className={`text-center py-2 text-sm font-semibold ${
-              index === 0 || index === 6 ? 'text-red-500' : 'text-gray-600'
+            className={`text-center py-2 text-xs sm:text-sm font-medium ${
+              index === 0 || index === 6 ? 'text-rose-500' : 'text-gray-600'
             }`}
           >
             {day}
@@ -94,7 +94,7 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
     // Add empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
       days.push(
-        <div key={`empty-${i}`} className="h-24 border border-gray-100"></div>
+        <div key={`empty-${i}`} className="h-24 sm:h-32 bg-gray-50/30"></div>
       );
     }
 
@@ -109,27 +109,28 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
         <div
           key={`day-${day}`}
           onClick={() => handleDayClick(date)}
-          className={`h-24 border border-gray-100 p-2 transition-all duration-200 cursor-pointer
-            ${isToday ? 'bg-blue-50' : 'hover:bg-gray-50'}
-            ${hasReservationsForDay ? 'border-blue-200' : ''}
+          className={`h-24 sm:h-32 p-1.5 sm:p-3 transition-all duration-200 cursor-pointer relative
+            ${isToday ? 'bg-violet-50/80 ring-2 ring-violet-200' : 'hover:bg-gray-50/80'}
+            ${hasReservationsForDay ? 'bg-gradient-to-br from-blue-50/50 via-indigo-50/50 to-purple-50/50' : ''}
           `}
         >
           <div className="flex items-start justify-between">
             <span
-              className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-sm
-                ${isToday ? 'bg-blue-500 text-white' : 'text-gray-700'}
+              className={`inline-flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full text-xs sm:text-sm font-medium
+                ${isToday ? 'bg-violet-600 text-white' : 'text-gray-700'}
+                transition-colors duration-200
               `}
             >
               {day}
             </span>
             {hasReservationsForDay && (
-              <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-blue-600 bg-blue-100 rounded-full">
+              <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] sm:text-xs font-bold leading-none text-violet-600 bg-violet-100 rounded-full">
                 {reservationCount}
               </span>
             )}
           </div>
           {hasReservationsForDay && (
-            <div className="mt-2">
+            <div className="mt-1 sm:mt-2 space-y-0.5 sm:space-y-1">
               {reservations
                 .filter(reservation => {
                   const startDate = new Date(reservation.startDate);
@@ -140,13 +141,13 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
                 .map((reservation, index) => (
                   <div
                     key={`reservation-${reservation._id}-${index}`}
-                    className="text-xs truncate mb-1 p-1 rounded bg-blue-100 text-blue-700"
+                    className="text-[10px] sm:text-xs truncate px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-md bg-white/90 text-violet-700 shadow-sm hover:shadow transition-all duration-200"
                   >
                     {reservation.automobile?.brand} {reservation.automobile?.model}
                   </div>
                 ))}
               {reservationCount > 2 && (
-                <div className="text-xs text-gray-500 italic">
+                <div className="text-[10px] sm:text-xs text-violet-500 italic px-1.5 sm:px-2">
                   +{reservationCount - 2} autres...
                 </div>
               )}
@@ -161,43 +162,43 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-6 mb-8">
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
           <button
             onClick={onPreviousMonth}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+            className="p-2 hover:bg-violet-50 rounded-full transition-colors duration-200"
           >
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-lg sm:text-2xl font-semibold text-gray-900">
             {getMonthName(currentDate)} {currentDate.getFullYear()}
           </h2>
           <button
             onClick={onNextMonth}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+            className="p-2 hover:bg-violet-50 rounded-full transition-colors duration-200"
           >
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
             </svg>
           </button>
         </div>
 
-        <div className="overflow-hidden rounded-lg">
+        <div className="overflow-hidden rounded-xl">
           {renderCalendarHeader()}
-          <div className="grid grid-cols-7 gap-px bg-gray-200">
+          <div className="grid grid-cols-7 divide-x divide-y divide-gray-100/50">
             {renderCalendarDays()}
           </div>
         </div>
 
-        <div className="mt-4 flex items-center justify-end space-x-4 text-sm text-gray-500">
+        <div className="mt-4 sm:mt-6 flex flex-wrap items-center justify-end gap-3 sm:gap-4 text-xs sm:text-sm text-gray-500">
           <div className="flex items-center">
-            <div className="w-3 h-3 bg-blue-100 border border-blue-200 rounded-full mr-2"></div>
+            <div className="w-2 h-2 sm:w-3 sm:h-3 border border-violet-500 bg-violet-300 rounded-full mr-1.5 sm:mr-2"></div>
             <span>Jour avec réservations</span>
           </div>
           <div className="flex items-center">
-            <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+            <div className="w-2 h-2 sm:w-3 sm:h-3 bg-violet-600 rounded-full mr-1.5 sm:mr-2"></div>
             <span>Aujourd'hui</span>
           </div>
         </div>
@@ -261,43 +262,76 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
                             const endDate = new Date(reservation.endDate);
                             return selectedDate >= startDate && selectedDate <= endDate;
                           })
-                          .map((reservation) => (
-                            <div
-                              key={reservation._id}
-                              onClick={() => {
-                                setSelectedReservation(reservation);
-                                setShowDetailsModal(true);
-                                setShowDayModal(false);
-                              }}
-                              className="group bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-lg hover:border-indigo-100 transition-all duration-200 cursor-pointer"
-                            >
-                              <div className="flex justify-between items-center">
-                                <div className="space-y-2">
-                                  <h4 className="font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">
-                                    {reservation.automobile?.brand} {reservation.automobile?.model}
-                                  </h4>
-                                  <div className="flex items-center space-x-2">
-                                    <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                                      <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                      </svg>
-                                    </div>
-                                    <p className="text-sm text-gray-600">
-                                      {reservation.client?.firstName} {reservation.client?.lastName}
-                                    </p>
-                                  </div>
+                          .length === 0 ? (
+                            <div className="flex justify-center items-center h-64">
+                              <div className="text-center space-y-4">
+                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-100">
+                                  <svg className="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                                  </svg>
                                 </div>
-                                <span className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${
-                                  reservation.status === 'PENDING' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                                  reservation.status === 'CONFIRMED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                                  reservation.status === 'CANCELLED' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
-                                  'bg-blue-50 text-blue-700 border border-blue-200'
-                                }`}>
-                                  {reservation.status}
-                                </span>
+                                <div className="space-y-2">
+                                  <p className="text-gray-500 font-medium">Ce jour vous n'avez pas de réservations</p>
+                                  <button
+                                    onClick={() => {
+                                      setShowDayModal(false);
+                                      setShowReservationModal(true);
+                                    }}
+                                    className="inline-flex items-center px-4 py-2 text-sm text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+                                  >
+                                    <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                    </svg>
+                                    Créer une réservation
+                                  </button>
+                                </div>
                               </div>
                             </div>
-                          ))}
+                          ) : (
+                            reservations
+                              .filter(reservation => {
+                                const startDate = new Date(reservation.startDate);
+                                const endDate = new Date(reservation.endDate);
+                                return selectedDate >= startDate && selectedDate <= endDate;
+                              })
+                              .map((reservation) => (
+                                <div
+                                  key={reservation._id}
+                                  onClick={() => {
+                                    setSelectedReservation(reservation);
+                                    setShowDetailsModal(true);
+                                    setShowDayModal(false);
+                                  }}
+                                  className="group bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-lg hover:border-indigo-100 transition-all duration-200 cursor-pointer"
+                                >
+                                  <div className="flex justify-between items-center">
+                                    <div className="space-y-2">
+                                      <h4 className="font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">
+                                        {reservation.automobile?.brand} {reservation.automobile?.model}
+                                      </h4>
+                                      <div className="flex items-center space-x-2">
+                                        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                          </svg>
+                                        </div>
+                                        <p className="text-sm text-gray-600">
+                                          {reservation.client?.firstName} {reservation.client?.lastName}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <span className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${
+                                      reservation.status === 'PENDING' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                                      reservation.status === 'CONFIRMED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                                      reservation.status === 'CANCELLED' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                                      'bg-blue-50 text-blue-700 border border-blue-200'
+                                    }`}>
+                                      {reservation.status}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))
+                          )}
                       </div>
                     </div>
                   </div>

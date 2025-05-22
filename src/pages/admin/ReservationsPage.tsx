@@ -11,6 +11,7 @@ import { fr } from 'date-fns/locale';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import ContractPDF from '../../components/PDF/ContractPDF';
 import PDFWrapper from '../../components/PDF/PDFWrapper';
+import { InformationCircleIcon } from '@heroicons/react/24/outline';
 
 const ReservationsPage: React.FC = () => {
   const { 
@@ -92,9 +93,12 @@ const ReservationsPage: React.FC = () => {
       }
       toast.success('Statut de la réservation mis à jour avec succès');
       await fetchReservations();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erreur lors de la mise à jour du statut:', error);
-      toast.error('Erreur lors de la mise à jour du statut');
+      const errorMessage = error && typeof error === 'object' && 'response' in error
+        ? (error.response as { data?: { error?: { message?: string } } })?.data?.error?.message || 'Erreur lors de la mise à jour du statut'
+        : 'Erreur lors de la mise à jour du statut';
+      toast.error(errorMessage);
     }
   };
 
@@ -283,7 +287,7 @@ const ReservationsPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto ">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Gestion des Réservations</h1>
         <button
@@ -386,9 +390,13 @@ const ReservationsPage: React.FC = () => {
                   <tr key={`${reservation._id}-${index}`} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900">
-                        {reservation.client?.firstName} {reservation.client?.lastName}
+                        {reservation.client
+                          ? `${reservation.client.firstName || 'N/A'} ${reservation.client.lastName || 'N/A'}`
+                          : 'N/A'}
                       </div>
-                      <div className="text-sm text-gray-500">{reservation.client?.email}</div>
+                      <div className="text-sm text-gray-500">
+                        {reservation.client?.email || 'N/A'}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-900">
@@ -436,22 +444,56 @@ const ReservationsPage: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <select
-                        value={reservation.isPaid ? 'yes' : 'no'}
-                        onChange={(e) => handleIsPaidChange(reservation._id, e.target.value === 'yes')}
-                        className={`
-                          mt-1 block w-full text-center rounded-lg border-0 py-2 pl-3 pr-3 text-sm
-                          focus:ring-2 focus:ring-blue-500 focus:outline-none
-                          ${reservation.isPaid 
-                            ? 'bg-green-50 text-green-800' 
-                            : 'bg-red-50 text-red-800'
-                          }
-                          transition-colors duration-200
-                        `}
-                      >
-                        <option value="no" className="bg-red-50 text-red-800">Non payé</option>
-                        <option value="yes" className="bg-green-50 text-green-800">Payé</option>
-                      </select>
+                      <div className="relative group flex items-center">
+                        <select
+                          value={reservation.isPaid ? 'yes' : 'no'}
+                          onChange={(e) => handleIsPaidChange(reservation._id, e.target.value === 'yes')}
+                          className={`
+                            mt-1 block w-full text-center rounded-lg border-0 py-2 pl-3 pr-3 text-sm
+                            focus:ring-2 focus:ring-blue-500 focus:outline-none
+                            ${reservation.isPaid 
+                              ? 'bg-green-50 text-green-800' 
+                              : 'bg-red-50 text-red-800'
+                            }
+                            transition-colors duration-200
+                            ${!(reservation.status === ReservationStatus.CONFIRMED || reservation.status === ReservationStatus.COMPLETED) ? 'cursor-not-allowed opacity-60' : ''}
+                          `}
+                          disabled={!(reservation.status === ReservationStatus.CONFIRMED || reservation.status === ReservationStatus.COMPLETED)}
+                          title={!(reservation.status === ReservationStatus.CONFIRMED || reservation.status === ReservationStatus.COMPLETED) ? 'Le paiement ne peut être modifié que pour une réservation confirmée ou terminée.' : ''}
+                        >
+                          <option value="no" className="bg-red-50 text-red-800">Non payé</option>
+                          <option value="yes" className="bg-green-50 text-green-800">Payé</option>
+                        </select>
+                        {!(reservation.status === ReservationStatus.CONFIRMED || reservation.status === ReservationStatus.COMPLETED) && (
+                          <div className="ml-2 relative flex items-center">
+                            <button
+                              type="button"
+                              className="text-blue-500 hover:text-blue-700 focus:outline-none"
+                              tabIndex={0}
+                              onClick={e => {
+                                e.stopPropagation();
+                                const tooltip = e.currentTarget.nextSibling;
+                                if (tooltip) {
+                                  tooltip.classList.toggle('opacity-0');
+                                  tooltip.classList.toggle('pointer-events-none');
+                                }
+                              }}
+                              onBlur={e => {
+                                const tooltip = e.currentTarget.nextSibling;
+                                if (tooltip) {
+                                  tooltip.classList.add('opacity-0');
+                                  tooltip.classList.add('pointer-events-none');
+                                }
+                              }}
+                            >
+                              <InformationCircleIcon className="h-5 w-5" />
+                            </button>
+                            <div className="absolute  center w-fit -translate-x-1/2 bottom-full mb-2  bg-gray-900 text-white text-xs rounded px-3 py-2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 text-center shadow-lg select-none">
+                              Le paiement ne peut être modifié que pour une réservation confirmée ou terminée.
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-2">
@@ -638,6 +680,7 @@ const ReservationsPage: React.FC = () => {
             fetchReservations();
           }}
           reservation={selectedReservation}
+          onSubmit={() => {}}
         />
       </div>
 
