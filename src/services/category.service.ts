@@ -1,17 +1,17 @@
 import api from './api.service';
 import { Category } from '../types/automobile.types';
 
-interface CreateCategoryDto {
+// On accepte FormData ou objet pour compatibilité
+type CreateCategoryDto = FormData | {
   name: string;
   description?: string;
   imageUrl?: string;
-}
-
-interface UpdateCategoryDto {
+};
+type UpdateCategoryDto = FormData | {
   name?: string;
   description?: string;
   imageUrl?: string;
-}
+};
 
 interface ApiResponse<T> {
   data: T;
@@ -31,12 +31,26 @@ export const categoryService = {
   },
 
   create: async (data: CreateCategoryDto): Promise<Category> => {
-    const response = await api.post<ApiResponse<Category>>('/categories', data);
+    let response;
+    if (data instanceof FormData) {
+      response = await api.post<ApiResponse<Category>>('/categories', data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+    } else {
+      response = await api.post<ApiResponse<Category>>('/categories', data);
+    }
     return response.data.data;
   },
 
   update: async (id: string, data: UpdateCategoryDto): Promise<Category> => {
-    const response = await api.put<ApiResponse<Category>>(`/categories/${id}`, data);
+    let response;
+    if (data instanceof FormData) {
+      response = await api.put<ApiResponse<Category>>(`/categories/${id}`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+    } else {
+      response = await api.put<ApiResponse<Category>>(`/categories/${id}`, data);
+    }
     return response.data.data;
   },
 

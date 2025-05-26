@@ -20,6 +20,7 @@ interface ReservationContextType {
   setPendingReservation: (id: string) => Promise<void>;
   updateReservationStatus: (id: string, status: ReservationStatus) => Promise<void>;
   setPaymentStatus: (id: string, isPaid: boolean) => Promise<void>;
+  getClientReservationCount: (clientId: string) => Promise<number>;
 }
 
 const ReservationContext = createContext<ReservationContextType | undefined>(undefined);
@@ -213,6 +214,19 @@ export const ReservationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
   }, []);
 
+  const getClientReservationCount = useCallback(async (clientId: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      return await reservationService.getClientReservationCount(clientId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const value = {
     reservations,
     loading,
@@ -230,6 +244,7 @@ export const ReservationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setPendingReservation,
     updateReservationStatus,
     setPaymentStatus,
+    getClientReservationCount,
   };
 
   return (

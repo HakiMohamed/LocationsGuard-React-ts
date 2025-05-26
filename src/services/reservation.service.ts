@@ -50,6 +50,16 @@ class ReservationService {
     return response.data;
   }
 
+  async getClientReservationCount(clientId: string): Promise<number> {
+    try {
+      const response = await api.get(`${this.baseUrl}/client/${clientId}/count`);
+      return response.data.data.count;
+    } catch (error) {
+      console.error('Error fetching client reservation count:', error);
+      return 0;
+    }
+  }
+
   async getByCategory(categoryId: string, status?: string): Promise<Reservation[]> {
     const query = status ? `?status=${status}` : '';
     const response = await api.get(`${this.baseUrl}/category/${categoryId}${query}`);
@@ -99,4 +109,4 @@ class ReservationService {
   }
 }
 
-export const reservationService = new ReservationService(); 
+export const reservationService = new ReservationService();

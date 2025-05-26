@@ -342,168 +342,158 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
   ];
 
   return (
-    <>
-      <Transition show={isOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-50" onClose={onClose}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
-          </Transition.Child>
+    <Transition appear show={isOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={onClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+        </Transition.Child>
 
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <Dialog.Panel className="mx-auto max-w-3xl w-full rounded-xl bg-white shadow-2xl overflow-hidden">
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                    <Dialog.Title className="text-xl font-semibold text-gray-900">
-                      {maintenance ? 'Modifier la maintenance' : 'Ajouter une maintenance'}
-                    </Dialog.Title>
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white shadow-xl transition-all">
+                {/* Header */}
+                <div className="bg-gradient-to-r from-purple-600/90 to-indigo-600/90 px-8 py-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                        <CheckIcon className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <Dialog.Title className="text-xl font-semibold text-white">
+                          {maintenance ? 'Modifier la maintenance' : 'Ajouter une maintenance'}
+                        </Dialog.Title>
+                        <p className="text-sm text-white/80 mt-1">
+                          Étape {currentStep} sur {steps.length} • {steps[currentStep - 1].title}
+                        </p>
+                      </div>
+                    </div>
                     <button
-                      type="button"
                       onClick={onClose}
-                      className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500 transition-colors"
+                      className="w-10 h-10 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center transition-colors duration-200"
                     >
-                      <XMarkIcon className="h-6 w-6" />
+                      <XMarkIcon className="h-5 w-5 text-white" />
                     </button>
                   </div>
+                </div>
 
-                  <div className="px-6 py-6">
-                    {/* Progress Steps */}
-                    <div className="mb-8 hidden md:block">
-                      <div className="flex items-center justify-between">
-                        {steps.map((step, index) => (
-                          <React.Fragment key={step.title}>
-                            <div className="flex flex-col items-center">
-                              <div
-                                className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                                  currentStep > index + 1
-                                    ? 'bg-blue-600 text-white'
-                                    : currentStep === index + 1
-                                    ? 'border-2 border-blue-600 text-blue-600'
-                                    : 'border-2 border-gray-300 text-gray-300'
-                                } transition-colors duration-200`}
-                              >
-                                {currentStep > index + 1 ? (
-                                  <CheckIcon className="h-5 w-5" />
-                                ) : (
-                                  <span>{index + 1}</span>
-                                )}
-                              </div>
-                              <div className="mt-2 text-center">
-                                <p
-                                  className={`text-sm font-medium ${
-                                    currentStep >= index + 1 ? 'text-gray-900' : 'text-gray-500'
-                                  }`}
-                                >
-                                  {step.title}
-                                </p>
-                                <p
-                                  className={`text-xs ${
-                                    currentStep >= index + 1 ? 'text-gray-500' : 'text-gray-400'
-                                  }`}
-                                >
-                                  {step.description}
-                                </p>
-                              </div>
-                            </div>
-                            {index < steps.length - 1 && (
-                              <div
-                                className={`flex-1 h-0.5 ${
-                                  currentStep > index + 1 ? 'bg-blue-600' : 'bg-gray-200'
-                                }`}
-                              />
+                {/* Step Progress */}
+                <div className="px-8 py-6 bg-white border-b border-gray-100">
+                  <div className="flex items-center justify-between">
+                    {steps.map((step, index) => (
+                      <div key={step.title} className="flex items-center flex-1">
+                        <div className="flex items-center">
+                          <div className={`
+                            flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-200
+                            ${currentStep > index + 1
+                              ? 'bg-gradient-to-r from-purple-600 to-indigo-600 border-purple-600 text-white'
+                              : currentStep === index + 1
+                                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 border-purple-600 text-white'
+                                : 'bg-white border-gray-300 text-gray-400'
+                            }
+                          `}>
+                            {currentStep > index + 1 ? (
+                              <CheckIcon className="w-5 h-5" />
+                            ) : (
+                              <span className="text-sm font-medium">{index + 1}</span>
                             )}
-                          </React.Fragment>
-                        ))}
+                          </div>
+                          <div className="ml-4 min-w-0">
+                            <p className={`text-sm font-medium ${
+                              currentStep >= index + 1 ? 'text-gray-900' : 'text-gray-500'
+                            }`}>
+                              {step.title}
+                            </p>
+                            <p className="text-xs text-gray-500">{step.description}</p>
+                          </div>
+                        </div>
+                        {index < steps.length - 1 && (
+                          <div className={`
+                            flex-1 h-px mx-6 transition-all duration-200
+                            ${currentStep > index + 1 ? 'bg-gradient-to-r from-purple-600 to-indigo-600' : 'bg-gray-200'}
+                          `} />
+                        )}
                       </div>
-                    </div>
+                    ))}
+                  </div>
+                </div>
 
-                    {/* Mobile Steps Indicator */}
-                    <div className="md:hidden mb-6">
-                      <p className="text-sm font-medium text-gray-500">
-                        Étape {currentStep} sur {steps.length}
-                      </p>
-                      <h3 className="text-lg font-medium text-gray-900">{steps[currentStep - 1].title}</h3>
-                      <p className="text-sm text-gray-500">{steps[currentStep - 1].description}</p>
-                      <div className="mt-2 h-1 w-full bg-gray-200 rounded-full">
-                        <div
-                          className="h-1 bg-blue-600 rounded-full transition-all duration-300"
-                          style={{ width: `${(currentStep / steps.length) * 100}%` }}
-                        ></div>
-                      </div>
-                    </div>
-
-                    {/* Step Content */}
-                    <div className="min-h-[300px]">{steps[currentStep - 1].content}</div>
-
-                    {/* Navigation Buttons */}
-                    <div className="mt-8 flex justify-between">
-                      <button
-                        type="button"
-                        onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 1))}
-                        className={`${
-                          currentStep === 1 ? 'invisible' : ''
-                        } flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors`}
-                      >
-                        <ArrowLongLeftIcon className="h-5 w-5 mr-1" />
-                        Précédent
-                      </button>
-                      {currentStep < steps.length ? (
-                        <button
-                          type="button"
-                          onClick={nextStep}
-                          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                        >
-                          Suivant
-                          <ArrowLongRightIcon className="h-5 w-5 ml-1" />
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={handleSubmit}
-                          disabled={loading}
-                          className="flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400 disabled:cursor-not-allowed"
-                        >
-                          {loading ? (
-                            <>
-                              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                              Traitement...
-                            </>
-                          ) : (
-                            <>
-                              {maintenance ? 'Modifier' : 'Créer'}
-                              <CheckIcon className="h-5 w-5 ml-1" />
-                            </>
-                          )}
-                        </button>
-                      )}
+                <div className="p-8">
+                  {/* Step Content */}
+                  <div className="bg-gray-50 rounded-xl min-h-[300px]">
+                    <div className="bg-white rounded-lg p-6">
+                      {steps[currentStep - 1].content}
                     </div>
                   </div>
-                </Dialog.Panel>
-              </Transition.Child>
-            </div>
+
+                  {/* Navigation Buttons */}
+                  <div className="mt-8 flex justify-between items-center">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 1))}
+                      className={`$
+                        currentStep === 1 ? 'invisible' : ''
+                      } inline-flex items-center px-6 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors duration-200 border border-gray-300`}
+                    >
+                      <ArrowLongLeftIcon className="h-4 w-4 mr-2" />
+                      Précédent
+                    </button>
+                    {currentStep < steps.length ? (
+                      <button
+                        type="button"
+                        onClick={nextStep}
+                        className="inline-flex items-center px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg transition-all duration-200 font-medium"
+                      >
+                        Suivant
+                        <ArrowLongRightIcon className="h-4 w-4 ml-2" />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={loading}
+                        className="inline-flex items-center px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                      >
+                        {loading ? (
+                          <>
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Traitement...
+                          </>
+                        ) : (
+                          <>
+                            {maintenance ? 'Modifier' : 'Créer'}
+                            <CheckIcon className="h-4 w-4 ml-2" />
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
           </div>
-        </Dialog>
-      </Transition>
-    </>
+        </div>
+      </Dialog>
+    </Transition>
   );
 };
 

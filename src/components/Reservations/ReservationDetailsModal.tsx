@@ -182,8 +182,20 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                           </div>
                           <div className="flex justify-between">
                             <p className="text-sm text-gray-500">Tarif journalier</p>
-                            <p className="font-medium text-right">{reservation.automobile.dailyRate} DH</p>
+                            <div className="font-medium text-right flex items-center gap-2">
+                              {reservation.dailyRate && reservation.dailyRate !== reservation.automobile.dailyRate ? (
+                                <>
+                                  <span className="line-through text-red-500">{reservation.automobile.dailyRate} DH</span>
+                                  <span className="text-emerald-600 font-bold">{reservation.dailyRate} DH</span>
+                                </>
+                              ) : (
+                                <span>{reservation.automobile.dailyRate} DH</span>
+                              )}
+                            </div>
                           </div>
+                          {reservation.dailyRate && reservation.dailyRate !== reservation.automobile.dailyRate && (
+                            <div className="text-xs text-emerald-600 font-semibold mt-1">Remise appliquée</div>
+                          )}
                           <div className="flex justify-between">
                             <p className="text-sm text-gray-500">Kilometrage</p>
                             <p className="font-medium text-right">{reservation.automobile.mileage} KM</p>
@@ -233,6 +245,14 @@ const ReservationDetailsModal: React.FC<ReservationDetailsModalProps> = ({
                                 </span>
                               )}
                             </div>
+                          </div>
+                          <div className="flex justify-between">
+                            <p className="text-sm text-gray-500">Lieu de prise en charge</p>
+                            <p className="font-medium text-right">{reservation.pickupLocation || 'N/A'}</p>
+                          </div>
+                          <div className="flex justify-between">
+                            <p className="text-sm text-gray-500">Lieu de retour</p>
+                            <p className="font-medium text-right">{reservation.returnLocation || 'N/A'}</p>
                           </div>
                         </div>
                       </div>

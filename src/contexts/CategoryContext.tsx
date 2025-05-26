@@ -12,8 +12,8 @@ interface CategoryContextType {
   loading: boolean;
   error: CategoryError | null;
   fetchCategories: () => Promise<void>;
-  createCategory: (data: { name: string; description?: string; imageUrl?: string }) => Promise<void>;
-  updateCategory: (id: string, data: { name?: string; description?: string; imageUrl?: string }) => Promise<void>;
+  createCategory: (data: FormData) => Promise<void>;
+  updateCategory: (id: string, data: FormData) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
 }
 
@@ -63,7 +63,7 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  const createCategory = useCallback(async (data: { name: string; description?: string; imageUrl?: string }) => {
+  const createCategory = useCallback(async (data: FormData) => {
     try {
       setLoading(true);
       setError(null);
@@ -78,7 +78,7 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [fetchCategories]);
 
-  const updateCategory = useCallback(async (id: string, data: { name?: string; description?: string; imageUrl?: string }) => {
+  const updateCategory = useCallback(async (id: string, data: FormData) => {
     try {
       setLoading(true);
       setError(null);

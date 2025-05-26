@@ -3,6 +3,8 @@ import { useClient } from '../../contexts/ClientContext';
 import { Client } from '../../types/client.types';
 import { toast } from 'react-hot-toast';
 import ClientModal from '../../components/Clients/ClientModal';
+import ClientDetailsModal from '../../components/Clients/ClientDetailsModal';
+import { EyeIcon } from '@heroicons/react/24/outline';
 
 const ClientsPage: React.FC = () => {
   const { clients, loading, error, fetchClients, createClient, updateClient, deleteClient } = useClient();
@@ -12,6 +14,7 @@ const ClientsPage: React.FC = () => {
   const [sortConfig, setSortConfig] = useState<{key: keyof Client, direction: 'ascending' | 'descending'} | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -83,7 +86,7 @@ const ClientsPage: React.FC = () => {
     } else {
       pageNumbers.push(1);
       let startPage = Math.max(2, currentPage - 1);
-      let endPage = Math.min(startPage + 2, totalPages - 1);
+      const endPage = Math.min(startPage + 2, totalPages - 1);
 
       if (endPage === totalPages - 1) {
         startPage = Math.max(2, endPage - 2);
@@ -257,7 +260,7 @@ const ClientsPage: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{client.email}</div>
-                    <div className="text-sm text-gray-500">{client.phone}</div>
+                    <div className="text-sm text-gray-500">{client.phoneNumber}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {client.city || '-'}
@@ -278,6 +281,16 @@ const ClientsPage: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-2">
+                      <button
+                        onClick={() => {
+                          setSelectedClient(client);
+                          setShowDetailsModal(true);
+                        }}
+                        className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                        title="Voir les détails"
+                      >
+                        <EyeIcon className="h-5 w-5" />
+                      </button>
                       <button
                         onClick={() => {
                           setSelectedClient(client);
@@ -393,6 +406,12 @@ const ClientsPage: React.FC = () => {
         }}
         onSubmit={handleSubmit}
         initialData={selectedClient}
+      />
+
+      <ClientDetailsModal
+        isOpen={showDetailsModal}
+        onClose={() => setShowDetailsModal(false)}
+        client={selectedClient === null ? undefined : selectedClient}
       />
 
       {isDeleteModalOpen && (

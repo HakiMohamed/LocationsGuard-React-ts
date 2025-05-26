@@ -23,6 +23,9 @@ export interface Reservation {
   paymentDate?: Date;
   cancellationReason?: string;
   category?: string;
+  pickupLocation?: string;
+  returnLocation?: string;
+  dailyRate?: number;
 } 
 
 export interface CreateReservationI {
@@ -33,6 +36,8 @@ export interface CreateReservationI {
   automobile: string;
   notes?: string;
   isPaid?: boolean;
+  pickupLocation?: string;
+  returnLocation?: string;
 } 
   
 
@@ -46,4 +51,6 @@ export interface UpdateReservationI {
   automobile?: string;
   notes?: string;
   isPaid?: boolean;
+  pickupLocation?: string;
+  returnLocation?: string;
 }

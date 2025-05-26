@@ -4,6 +4,8 @@ import { Category } from '../../types/automobile.types';
 import { toast } from 'react-hot-toast';
 import CategoryModal from '../../components/categories/CategoryModal';
 import { automobileService } from '../../services/automobile.service';
+import CategoryDetailsModal from '../../components/categories/CategoryDetailsModal';
+import { EyeIcon } from '@heroicons/react/24/outline';
 
 const CategoriesPage: React.FC = () => {
   const { categories, loading, error, fetchCategories, createCategory, updateCategory, deleteCategory } = useCategory();
@@ -12,6 +14,7 @@ const CategoriesPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const [categoryCount, setCategoryCount] = useState<Record<string, number>>({});
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const loadAutomobileCounts = useCallback(async () => {
     const counts: Record<string, number> = {};
@@ -197,9 +200,17 @@ const CategoriesPage: React.FC = () => {
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-3">
-                        <div className="flex-shrink-0 h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-medium shadow-sm group-hover:scale-110 transition-transform duration-200">
-                          {getInitials(category.name)}
-                        </div>
+                        {category.imageUrl ? (
+                          <img
+                            src={category.imageUrl}
+                            alt={category.name}
+                            className="flex-shrink-0 h-10 w-10 rounded-xl object-cover border shadow-sm group-hover:scale-110 transition-transform duration-200"
+                          />
+                        ) : (
+                          <div className="flex-shrink-0 h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-medium shadow-sm group-hover:scale-110 transition-transform duration-200">
+                            {getInitials(category.name)}
+                          </div>
+                        )}
                         <div className="font-medium text-gray-900">{category.name}</div>
                       </div>
                     </td>
@@ -213,6 +224,16 @@ const CategoriesPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end space-x-2 opacity-90 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => {
+                            setSelectedCategory(category);
+                            setShowDetailsModal(true);
+                          }}
+                          className="p-2 text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors"
+                          title="Voir les détails"
+                        >
+                          <EyeIcon className="h-5 w-5" />
+                        </button>
                         <button
                           onClick={() => handleEdit(category)}
                           className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
@@ -307,6 +328,15 @@ const CategoriesPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <CategoryDetailsModal
+        isOpen={showDetailsModal}
+        onClose={() => {
+          setShowDetailsModal(false);
+          setSelectedCategory(null);
+        }}
+        category={selectedCategory || undefined}
+      />
     </div>
   );
 };

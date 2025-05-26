@@ -37,7 +37,6 @@ const AutomobileModal: React.FC<AutomobileModalProps> = ({ isOpen, onClose, onSu
     description: '',
     features: [] as string[],
     category: '',
-    lastVidangeDate: '',
     insuranceType: 'TIERS_SIMPLE' as InsuranceType,
   });
   const [files, setFiles] = useState<File[]>([]);
@@ -63,9 +62,6 @@ const AutomobileModal: React.FC<AutomobileModalProps> = ({ isOpen, onClose, onSu
         description: automobile.description || '',
         features: automobile.features || [],
         category: automobile.category._id,
-        lastVidangeDate: automobile.lastVidangeDate 
-          ? new Date(automobile.lastVidangeDate).toISOString().split('T')[0]
-          : '',
         insuranceType: automobile.insuranceType || 'TIERS_SIMPLE',
       });
     } else {
@@ -85,7 +81,6 @@ const AutomobileModal: React.FC<AutomobileModalProps> = ({ isOpen, onClose, onSu
         description: '',
         features: [],
         category: '',
-        lastVidangeDate: '',
         insuranceType: 'TIERS_SIMPLE',
       });
     }
@@ -363,13 +358,6 @@ const AutomobileModal: React.FC<AutomobileModalProps> = ({ isOpen, onClose, onSu
               value={formData.fuelConsumption}
               onChange={(e) => setFormData((prev) => ({ ...prev, fuelConsumption: e.target.value }))}
               placeholder="Ex: 5.5"
-            />
-            <Input
-              id="lastVidangeDate"
-              label="Date dernière vidange"
-              type="date"
-              value={formData.lastVidangeDate}
-              onChange={(e) => setFormData((prev) => ({ ...prev, lastVidangeDate: e.target.value }))}
             />
           </div>
         </div>

@@ -65,7 +65,7 @@ const CompleteMaintenanceModal: React.FC<CompleteMaintenanceModalProps> = ({
                   Marquer la maintenance comme réalisée
                 </Dialog.Title>
                 <div className="mb-4 p-3 bg-yellow-100 border-l-4 border-yellow-400 text-yellow-800 rounded">
-                  <strong>Important :</strong> Veuillez vérifier attentivement la date et le kilométrage avant de confirmer.<br />Cette action est irréversible.
+                  <strong>Important :</strong> Veuillez saisir la date de réalisation et le kilométrage exact auquel cette maintenance a été effectuée. Ces informations sont essentielles pour le suivi et le calcul des prochaines maintenances.
                 </div>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Date de réalisation</label>
@@ -85,11 +85,6 @@ const CompleteMaintenanceModal: React.FC<CompleteMaintenanceModalProps> = ({
                     onChange={e => setMileage(e.target.value)}
                     min={0}
                   />
-                  {defaultMileage !== undefined && (
-                    <div className="mt-2 p-2 bg-blue-50 border-l-4 border-blue-400 text-blue-800 text-sm rounded">
-                      <strong>Astuce :</strong> Si vous laissez ce champ vide, le kilométrage actuel du véhicule (<span className="font-bold">{defaultMileage} km</span>) sera utilisé automatiquement.
-                    </div>
-                  )}
                 </div>
                 {error && <div className="text-red-500 text-sm mb-2">{error}</div>}
                 <div className="flex justify-end gap-2 mt-6">

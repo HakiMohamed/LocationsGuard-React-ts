@@ -23,7 +23,10 @@ import ResetPassword from './pages/auth/ResetPassword';
 import { MaintenanceProvider } from './contexts/MaintenanceContext';
 import MaintenancesPage from './pages/admin/MaintenancesPage';
 import HomePage from './pages/HomePage';
-
+import ExpensesPage from './pages/admin/ExpensesPage';
+import { ExpenseProvider } from './contexts/ExpenseContext';
+import StatisticsPage from './pages/admin/StatisticsPage';
+import { StatsProvider } from './contexts/StatsContext';
 // Composant pour protéger les routes admin
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -78,6 +81,7 @@ function App() {
               <ReservationProvider>
                 <ClientProvider>
                   <MaintenanceProvider>
+                    <ExpenseProvider>
                     <Routes>
                       {/* Redirection de la racine vers /home ou /admin selon le rôle */}
                       <Route path="/" element={<PrivateRoute><RoleBasedRedirect /></PrivateRoute>} />
@@ -102,11 +106,18 @@ function App() {
                         <Route path="reservations" element={<ReservationsPage />} />
                         <Route path="profile" element={<ProfilePage />} />
                         <Route path="maintenances" element={<MaintenancesPage />} />
+                        <Route path="depenses" element={<ExpensesPage />} />
+                        <Route path="statistics" element={
+                          <StatsProvider>
+                            <StatisticsPage />
+                          </StatsProvider>
+                        } />
                       </Route>
                       
                       {/* Route 404 */}
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
+                    </ExpenseProvider>
                   </MaintenanceProvider>
                 </ClientProvider>
               </ReservationProvider>

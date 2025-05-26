@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 import AutomobileModal from '../../components/Automobiles/AutomobileModal';
 import AutomobileDetailsModal from '../../components/Automobiles/AutomobileDetailsModal';
 import { categoryService } from '../../services/category.service';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface ApiError {
   response?: {
@@ -135,6 +136,8 @@ const AutomobilesPage: React.FC = () => {
   const [automobileToDelete, setAutomobileToDelete] = useState<Automobile | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchAutomobiles();
@@ -172,6 +175,18 @@ const AutomobilesPage: React.FC = () => {
       setAutomobilesWithCategories(automobiles || []);
     }
   }, [automobiles, categories]);
+
+  // Ouvre le modal si navigation avec state showModal et id
+  useEffect(() => {
+    if (location.state && location.state.showModal && location.state.id && automobilesWithCategories.length > 0) {
+      const found = automobilesWithCategories.find(a => a._id === location.state.id);
+      if (found) {
+        handleOpenDetails(found);
+        // Nettoie l'état pour éviter réouverture au refresh
+        navigate(location.pathname, { replace: true });
+      }
+    }
+  }, [location.state, automobilesWithCategories]);
 
   const handleEdit = (automobile: Automobile) => {
     setSelectedAutomobile(automobile);

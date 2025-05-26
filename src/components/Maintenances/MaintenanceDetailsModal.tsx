@@ -13,9 +13,12 @@ import {
   faRoad, 
   faMoneyBillWave, 
   faUser,
-  faClock
+  faClock,
+  faXmark,
+  faDollarSign
 } from '@fortawesome/free-solid-svg-icons';
 import { MaintenanceType, MaintenanceWithNextDetails } from '../../types/maintenance.types';
+import { DollarSign } from 'lucide-react';
 
 interface MaintenanceDetailsModalProps {
   isOpen: boolean;
@@ -75,19 +78,27 @@ const MaintenanceDetailsModal: React.FC<MaintenanceDetailsModalProps> = ({
     ? maintenance.automobile 
     : null;
 
-  const renderDetailItem = (icon: React.ComponentProps<typeof FontAwesomeIcon>['icon'], label: string, value: string | number | undefined) => (
-    <div className="bg-gray-50 p-3 rounded-lg flex items-center">
-      <FontAwesomeIcon icon={icon} className="text-gray-500 mr-2" />
-      <div>
-        <p className="text-sm text-gray-500 font-medium">{label}</p>
-        <p className="text-gray-800">{value || 'N/A'}</p>
+  const renderDetailCard = (icon: React.ComponentProps<typeof FontAwesomeIcon>['icon'], label: string, value: string | number | undefined, accent?: string) => (
+    <div className="group relative overflow-hidden bg-white border border-gray-100 hover:border-blue-200 rounded-xl p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+      <div className="flex items-start space-x-3">
+        <div className={`flex-shrink-0 w-10 h-10 rounded-lg ${accent || 'bg-blue-50'} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+          <FontAwesomeIcon 
+            icon={icon} 
+            className={`${accent ? 'text-white' : 'text-blue-600'} text-sm`} 
+          />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">{label}</p>
+          <p className="text-gray-900 font-semibold text-sm leading-tight">{value || 'Non spécifié'}</p>
+        </div>
       </div>
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
     </div>
   );
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-10" onClose={onClose}>
+      <Dialog as="div" className="relative z-50" onClose={onClose}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -97,93 +108,130 @@ const MaintenanceDetailsModal: React.FC<MaintenanceDetailsModalProps> = ({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black bg-opacity-25" />
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
+          <div className="flex min-h-full items-center justify-center p-4">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
-              enterFrom="opacity-0 scale-95"
+              enterFrom="opacity-0 scale-90"
               enterTo="opacity-100 scale-100"
               leave="ease-in duration-200"
               leaveFrom="opacity-100 scale-100"
-              leaveTo="opacity-0 scale-95"
+              leaveTo="opacity-0 scale-90"
             >
-              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                {/* Close button */}
-                <button
-                  onClick={onClose}
-                  className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+              <Dialog.Panel className="w-full max-w-6xl transform overflow-hidden rounded-3xl bg-white shadow-2xl transition-all">
+                {/* Header */}
+                <div className="relative bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600/90 to-purple-600/90"></div>
+                  <div className="relative flex items-center justify-between">
+                    <div>
+                      <Dialog.Title className="text-2xl font-bold text-white mb-1">
+                        Détails de la maintenance
+                      </Dialog.Title>
+                      <p className="text-blue-100 text-sm">
+                        {translateMaintenanceType(maintenance.type)}
+                      </p>
+                    </div>
+                    <button
+                      onClick={onClose}
+                      className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-200"
+                    >
+                      <FontAwesomeIcon icon={faXmark} className="text-lg" />
+                    </button>
+                  </div>
+                </div>
 
-                <Dialog.Title 
-                  as="h3" 
-                  className="text-xl font-bold leading-6 text-gray-900 border-b pb-3 mb-4"
-                >
-                  Détails de la maintenance
-                </Dialog.Title>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Left Column: Vehicle Information */}
-                  <div className="space-y-3 overflow-y-auto max-h-80">
-                    <div className="grid grid-cols-2 gap-3">
-                      {renderDetailItem(faCar, 'Véhicule', automobile ? `${automobile.brand} ${automobile.model}` : 'N/A')}
-                      {renderDetailItem(faWrench, 'Type de maintenance', translateMaintenanceType(maintenance.type))}
-                      {renderDetailItem(faCalendar, 'Date de réalisation', 
-                        maintenance.date 
-                          ? format(new Date(maintenance.date), 'dd MMM yyyy', { locale: fr }) 
-                          : 'N/A'
+                <div className="p-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Main Information */}
+                    <div className="lg:col-span-2 space-y-6">
+                      {/* Key Details Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {renderDetailCard(faCar, 'Véhicule', automobile ? `${automobile.brand} ${automobile.model}` : 'N/A', 'bg-gradient-to-br from-gray-700 to-gray-800')}
+                        {renderDetailCard(faCalendar, 'Date de réalisation', 
+                          maintenance.date 
+                            ? format(new Date(maintenance.date), 'dd MMM yyyy', { locale: fr }) 
+                            : 'N/A',
+                          'bg-gradient-to-br from-green-500 to-emerald-600'
+                        )}
+                        {renderDetailCard(faRoad, 'Prochain kilométrage', 
+                          maintenance.nextMaintenanceKilometers
+                            ? `${maintenance.nextMaintenanceKilometers.toLocaleString()} km`
+                            : 'N/A',
+                          'bg-gradient-to-br from-orange-500 to-red-500'
+                        )}
+                        {renderDetailCard(faDollarSign, 'Coût', maintenance.cost ? `${maintenance.cost.toLocaleString()} DH` : 'N/A', 'bg-gradient-to-br from-purple-500 to-pink-600')}
+                        {renderDetailCard(faUser, 'Technicien', maintenance.technician || 'N/A', 'bg-gradient-to-br from-indigo-500 to-blue-600')}
+                        {renderDetailCard(faClock, 'Prochaine échéance', 
+                          maintenance.nextMaintenanceDate
+                            ? format(new Date(maintenance.nextMaintenanceDate), 'dd MMM yyyy', { locale: fr })
+                            : 'N/A',
+                          'bg-gradient-to-br from-teal-500 to-cyan-600'
+                        )}
+                      </div>
+
+                      {/* Description Section */}
+                      {maintenance.description && (
+                        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200">
+                          <div className="flex items-center space-x-2 mb-3">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <h4 className="font-semibold text-gray-800">Description</h4>
+                          </div>
+                          <p className="text-gray-700 leading-relaxed">{maintenance.description}</p>
+                        </div>
                       )}
-                      {renderDetailItem(faRoad, 'Prochain kilométrage', 
-                        maintenance.nextMaintenanceKilometers
-                          ? `${maintenance.nextMaintenanceKilometers} km`
-                          : 'N/A'
-                      )}
-                      {renderDetailItem(faMoneyBillWave, 'Coût', maintenance.cost ? `${maintenance.cost} DH` : 'N/A')}
-                      {renderDetailItem(faUser, 'Réalisé par', maintenance.technician || 'N/A')}
-                      {renderDetailItem(faClock, 'Prochaine échéance', 
-                        maintenance.nextMaintenanceDate
-                          ? format(new Date(maintenance.nextMaintenanceDate), 'dd MMM yyyy', { locale: fr })
-                          : 'N/A'
+
+                      {/* Notes Section */}
+                      {maintenance.notes && (
+                        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200">
+                          <div className="flex items-center space-x-2 mb-3">
+                            <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                            <h4 className="font-semibold text-gray-800">Notes</h4>
+                          </div>
+                          <p className="text-gray-700 leading-relaxed">{maintenance.notes}</p>
+                        </div>
                       )}
                     </div>
-                    
-                    {/* Description */}
-                    {maintenance.description && (
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <h4 className="font-medium text-gray-700 mb-2">Description</h4>
-                        <p className="text-gray-600">{maintenance.description}</p>
-                      </div>
-                    )}
 
-                    {/* Notes */}
-                    {maintenance.notes && (
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <h4 className="font-medium text-gray-700 mb-2">Notes</h4>
-                        <p className="text-gray-600">{maintenance.notes}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Right Column: Documents and Images */}
-                  <div className="space-y-4">
-                    {/* Vehicle Image */}
-                    {automobile && automobile.images && automobile.images.length > 0 && (
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <h4 className="font-medium text-gray-700 mb-2">Image du véhicule</h4>
-                        <img 
-                          src={automobile.images[0]} 
-                          alt={`${automobile.brand} ${automobile.model}`}
-                          className="w-full h-48 object-cover rounded-lg"
-                        />
-                      </div>
-                    )}
+                    {/* Vehicle Image Section */}
+                    <div className="lg:col-span-1">
+                      {automobile && automobile.images && automobile.images.length > 0 ? (
+                        <div className="sticky top-8">
+                          <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200">
+                            <h4 className="font-semibold text-gray-800 mb-4 flex items-center space-x-2">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              <span>Véhicule</span>
+                            </h4>
+                            <div className="relative group">
+                              <img 
+                                src={automobile.images[0]} 
+                                alt={`${automobile.brand} ${automobile.model}`}
+                                className="w-full h-64 object-cover rounded-xl shadow-lg group-hover:shadow-xl transition-shadow duration-300"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            </div>
+                            <div className="mt-4 text-center">
+                              <p className="font-semibold text-gray-800">{automobile.brand} {automobile.model}</p>
+                              {automobile.year && (
+                                <p className="text-sm text-gray-600">{automobile.year}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200">
+                          <div className="text-center py-12">
+                            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                              <FontAwesomeIcon icon={faCar} className="text-gray-400 text-xl" />
+                            </div>
+                            <p className="text-gray-500">Aucune image disponible</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </Dialog.Panel>

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Dialog } from '@headlessui/react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import React, { useState, useEffect, Fragment } from 'react';
+import { Dialog, Transition } from '@headlessui/react';
+import { XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { Category } from '../../types/automobile.types';
 import { toast } from 'react-hot-toast';
 import Input from '../ui/Input';
@@ -21,95 +21,7 @@ const CategoryModal: React.FC<CategoryModalProps> = ({ isOpen, onClose, onSubmit
     imagePreview: '',
   });
 
-  useEffect(() => {
-    if (category) {
-      setFormData({
-        name: category.name,
-        description: category.description || '',
-        imageFiles: [],
-        imagePreview: category.imageUrl || '',
-      });
-    } else {
-      setFormData({
-        name: '',
-        description: '',
-        imageFiles: [],
-        imagePreview: '',
-      });
-    }
-    setCurrentStep(1);
-  }, [category, isOpen]);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      const file = files[0];
-      setFormData(prev => ({
-        ...prev,
-        imageFiles: [file],
-        imagePreview: URL.createObjectURL(file),
-      }));
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('name', formData.name.trim());
-      if (formData.description) {
-        formDataToSend.append('description', formData.description.trim());
-      }
-      if (formData.imageFiles.length > 0) {
-        formDataToSend.append('image', formData.imageFiles[0]);
-      }
-
-      await onSubmit(formDataToSend);
-      onClose();
-    } catch (error: any) {
-      const errorResponse = error.response?.data;
-      
-      // Handle different error status codes
-      switch (error.response?.status) {
-        case 409:
-          toast.error('Une catégorie avec ce nom existe déjà');
-          break;
-        case 400:
-          // Handle validation errors
-          const validationErrors = Array.isArray(errorResponse?.message) 
-            ? errorResponse.message.join(', ')
-            : errorResponse?.message;
-          toast.error(validationErrors || 'Données invalides');
-          break;
-        case 401:
-          toast.error('Non autorisé - Veuillez vous reconnecter');
-          break;
-        case 403:
-          toast.error('Accès refusé - Vous n\'avez pas les permissions nécessaires');
-          break;
-        case 404:
-          toast.error('Ressource non trouvée');
-          break;
-        case 500:
-          toast.error('Erreur serveur - Veuillez réessayer plus tard');
-          break;
-        default:
-          toast.error('Une erreur est survenue lors de l\'opération');
-      }
-    }
-  };
-
-  const nextStep = () => {
-    if (currentStep === 1) {
-      if (!formData.name.trim()) {
-        toast.error('Le nom de la catégorie est requis');
-        return;
-      }
-    }
-    setCurrentStep(prev => prev + 1);
-  };
-
+  // Steps must be declared before any useEffect or function that uses them
   const steps = [
     {
       title: 'Informations de base',
@@ -134,120 +46,304 @@ const CategoryModal: React.FC<CategoryModalProps> = ({ isOpen, onClose, onSubmit
           />
         </div>
       ),
+    },
+    {
+      title: 'Image de la catégorie',
+      description: 'Ajouter une image représentative',
+      content: (
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Image (JPG, PNG, WEBP, max 2Mo)</label>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/jpg,image/webp"
+              onChange={e => {
+                const files = e.target.files;
+                if (files && files.length > 0) {
+                  const file = files[0];
+                  setFormData(prev => ({
+                    ...prev,
+                    imageFiles: [file],
+                    imagePreview: URL.createObjectURL(file),
+                  }));
+                }
+              }}
+              className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-r file:from-purple-600 file:to-indigo-600 file:text-white hover:file:from-purple-700 hover:file:to-indigo-700"
+            />
+            {formData.imagePreview && (
+              <div className="mt-4 flex flex-col items-start gap-2">
+                <img
+                  src={formData.imagePreview}
+                  alt="Aperçu de l'image"
+                  className="w-40 h-32 object-cover rounded-lg border shadow"
+                />
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, imageFiles: [], imagePreview: '' }))}
+                  className="text-xs text-red-500 hover:underline mt-1"
+                >
+                  Supprimer l'image
+                </button>
+              </div>
+            )}
+            {!formData.imagePreview && (
+              <div className="mt-2 text-xs text-gray-400">Aucune image sélectionnée</div>
+            )}
+          </div>
+        </div>
+      ),
+    },
+  ];
+
+  useEffect(() => {
+    if (category) {
+      setFormData({
+        name: category.name,
+        description: category.description || '',
+        imageFiles: [],
+        imagePreview: category.imageUrl || '',
+      });
+    } else {
+      setFormData({
+        name: '',
+        description: '',
+        imageFiles: [],
+        imagePreview: '',
+      });
     }
-   
-  ];    
+    setCurrentStep(1);
+  }, [category, isOpen]);
+
+  const validateStep = (step: number) => {
+    if (step === 1) {
+      if (!formData.name.trim()) {
+        toast.error('Le nom de la catégorie est requis');
+        return false;
+      }
+      if (formData.description && formData.description.length > 200) {
+        toast.error('La description ne doit pas dépasser 200 caractères');
+        return false;
+      }
+    }
+    if (step === 2) {
+      if (formData.imageFiles.length > 0) {
+        const file = formData.imageFiles[0];
+        if (!['image/jpeg', 'image/png', 'image/jpg', 'image/webp'].includes(file.type)) {
+          toast.error('Seuls les fichiers JPG, PNG ou WEBP sont autorisés');
+          return false;
+        }
+        if (file.size > 2 * 1024 * 1024) {
+          toast.error('L\'image ne doit pas dépasser 2 Mo');
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateStep(currentStep)) return;
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('name', formData.name.trim());
+      if (formData.description) {
+        formDataToSend.append('description', formData.description.trim());
+      }
+      if (formData.imageFiles.length > 0) {
+        formDataToSend.append('image', formData.imageFiles[0]);
+      }
+      await onSubmit(formDataToSend);
+      onClose();
+    } catch (error: unknown) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const err = error as any;
+      const errorResponse = err.response?.data;
+      // Handle different error status codes
+      switch (err.response?.status) {
+        case 409:
+          toast.error('Une catégorie avec ce nom existe déjà');
+          break;
+        case 400: {
+          // Handle validation errors
+          const validationErrors = Array.isArray(errorResponse?.message)
+            ? errorResponse.message.join(', ')
+            : errorResponse?.message;
+          toast.error(validationErrors || 'Données invalides');
+          break;
+        }
+        case 401:
+          toast.error('Non autorisé - Veuillez vous reconnecter');
+          break;
+        case 403:
+          toast.error('Accès refusé - Vous n\'avez pas les permissions nécessaires');
+          break;
+        case 404:
+          toast.error('Ressource non trouvée');
+          break;
+        case 500:
+          toast.error('Erreur serveur - Veuillez réessayer plus tard');
+          break;
+        default:
+          toast.error('Une erreur est survenue lors de l\'opération');
+      }
+    }
+  };
+
+  const nextStep = () => {
+    if (!validateStep(currentStep)) return;
+    setCurrentStep(prev => prev + 1);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && currentStep < steps.length) {
+        e.preventDefault();
+        nextStep();
+      }
+    };
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentStep, isOpen, steps.length]);
 
   return (
-    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
-      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-      
-      <div className="fixed inset-0 flex items-center justify-center p-4">
-        <Dialog.Panel className="mx-auto max-w-2xl w-full rounded-xl bg-white">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <Dialog.Title className="text-lg font-medium">
-              {category ? 'Modifier la catégorie' : 'Ajouter une catégorie'}
-            </Dialog.Title>
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-500"
+    <Transition appear show={isOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={onClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" />
+        </Transition.Child>
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
             >
-              <XMarkIcon className="h-6 w-6" />
-            </button>
-          </div>
-
-          <div className="px-6 py-4">
-            {/* Stepper */}
-            <div className="mb-8">
-              <div className="flex items-center justify-center">
-                {steps.map((step, index) => (
-                  <React.Fragment key={step.title}>
-                    <div className="flex items-center">
-                      <div
-                        className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${
-                          currentStep > index + 1
-                            ? 'border-blue-600 bg-blue-600 text-white'
-                            : currentStep === index + 1
-                            ? 'border-blue-600 text-blue-600'
-                            : 'border-gray-300 text-gray-300'
-                        }`}
-                      >
-                        {currentStep > index + 1 ? (
-                          <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        ) : (
-                          <span>{index + 1}</span>
-                        )}
+              <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white shadow-xl transition-all">
+                {/* Header */}
+                <div className="bg-gradient-to-r from-purple-600/90 to-indigo-600/90 px-8 py-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                        <CheckIcon className="h-6 w-6 text-white" />
                       </div>
-                      <div className="ml-4">
-                        <p
-                          className={`text-sm font-medium ${
-                            currentStep >= index + 1 ? 'text-gray-900' : 'text-gray-500'
-                          }`}
-                        >
-                          {step.title}
-                        </p>
-                        <p
-                          className={`text-sm ${
-                            currentStep >= index + 1 ? 'text-gray-500' : 'text-gray-400'
-                          }`}
-                        >
-                          {step.description}
+                      <div>
+                        <Dialog.Title className="text-xl font-semibold text-white">
+                          {category ? 'Modifier la catégorie' : 'Ajouter une catégorie'}
+                        </Dialog.Title>
+                        <p className="text-sm text-white/80 mt-1">
+                          Étape {currentStep} sur {steps.length} • {steps[currentStep - 1].title}
                         </p>
                       </div>
                     </div>
-                    {index < steps.length - 1 && (
-                      <div className="ml-4 flex-1 border-t-2 border-gray-200" />
+                    <button
+                      onClick={onClose}
+                      className="w-10 h-10 rounded-lg bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center transition-colors duration-200"
+                    >
+                      <XMarkIcon className="h-5 w-5 text-white" />
+                    </button>
+                  </div>
+                </div>
+                {/* Step Progress */}
+                <div className="px-8 py-6 bg-white border-b border-gray-100">
+                  <div className="flex items-center justify-between">
+                    {steps.map((step, index) => (
+                      <div key={step.title} className="flex items-center flex-1">
+                        <div className="flex items-center">
+                          <div className={`
+                            flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-200
+                            ${currentStep > index + 1
+                              ? 'bg-gradient-to-r from-purple-600 to-indigo-600 border-purple-600 text-white'
+                              : currentStep === index + 1
+                                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 border-purple-600 text-white'
+                                : 'bg-white border-gray-300 text-gray-400'
+                            }
+                          `}>
+                            {currentStep > index + 1 ? (
+                              <CheckIcon className="w-5 h-5" />
+                            ) : (
+                              <span className="text-sm font-medium">{index + 1}</span>
+                            )}
+                          </div>
+                          <div className="ml-4 min-w-0">
+                            <p className={`text-sm font-medium ${
+                              currentStep >= index + 1 ? 'text-gray-900' : 'text-gray-500'
+                            }`}>
+                              {step.title}
+                            </p>
+                            <p className="text-xs text-gray-500">{step.description}</p>
+                          </div>
+                        </div>
+                        {index < steps.length - 1 && (
+                          <div className={`
+                            flex-1 h-px mx-6 transition-all duration-200
+                            ${currentStep > index + 1 ? 'bg-gradient-to-r from-purple-600 to-indigo-600' : 'bg-gray-200'}
+                          `} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="p-8">
+                  {/* Step Content */}
+                  <div className="bg-gray-50 rounded-xl min-h-[200px]">
+                    <div className="bg-white rounded-lg p-6">
+                      {steps[currentStep - 1].content}
+                    </div>
+                  </div>
+                  {/* Navigation Buttons */}
+                  <div className="mt-8 flex justify-between items-center">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(prev => prev - 1)}
+                      className={`$
+                        currentStep === 1 ? 'invisible' : ''
+                      } inline-flex items-center px-6 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 bg-white hover:bg-gray-50 rounded-lg transition-colors duration-200 border border-gray-300`}
+                    >
+                      Précédent
+                    </button>
+                    {currentStep < steps.length ? (
+                      <button
+                        type="button"
+                        onClick={nextStep}
+                        className="inline-flex items-center px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg transition-all duration-200 font-medium"
+                      >
+                        Suivant
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleSubmit}
+                        className="inline-flex items-center px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg transition-all duration-200 font-medium"
+                      >
+                        {category ? 'Modifier' : 'Créer'}
+                        <CheckIcon className="h-4 w-4 ml-2" />
+                      </button>
                     )}
-                  </React.Fragment>
-                ))}
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="space-y-6">
-              {steps[currentStep - 1].content}
-            </div>
-
-            {/* Navigation */}
-            <div className="mt-6 flex justify-between">
-              <button
-                type="button"
-                onClick={() => setCurrentStep(prev => prev - 1)}
-                className={`${
-                  currentStep === 1 ? 'invisible' : ''
-                } px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900`}
-              >
-                Précédent
-              </button>
-              {currentStep < steps.length ? (
-                <button
-                  type="button"
-                  onClick={nextStep}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  Suivant
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  {category ? 'Modifier' : 'Créer'}
-                </button>
-              )}
-            </div>
+                  </div>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
           </div>
-        </Dialog.Panel>
-      </div>
-    </Dialog>
+        </div>
+      </Dialog>
+    </Transition>
   );
 };
 

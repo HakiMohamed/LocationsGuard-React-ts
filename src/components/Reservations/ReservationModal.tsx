@@ -52,6 +52,9 @@ interface ReservationFormData {
   endDate: Date | null;
   notes: string;
   status: string;
+  pickupLocation: string;
+  returnLocation: string;
+  dailyRate?: number;
 }
 
 interface FilterInputsProps {
@@ -284,7 +287,10 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
     startDate: null,
     endDate: null,
     notes: '',
-    status: 'PENDING'
+    status: 'PENDING',
+    pickupLocation: '',
+    returnLocation: '',
+    dailyRate: undefined,
   });
 
   // Update formData when reservation changes
@@ -296,7 +302,10 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
         startDate: new Date(reservation.startDate),
         endDate: new Date(reservation.endDate),
         notes: reservation.notes || '',
-        status: reservation.status
+        status: reservation.status,
+        pickupLocation: reservation.pickupLocation || '',
+        returnLocation: reservation.returnLocation || '',
+        dailyRate: reservation.dailyRate || reservation.automobile.dailyRate,
       });
     } else {
       setFormData({
@@ -305,7 +314,10 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
         startDate: null,
         endDate: null,
         notes: '',
-        status: 'PENDING'
+        status: 'PENDING',
+        pickupLocation: '',
+        returnLocation: '',
+        dailyRate: undefined,
       });
     }
   }, [reservation]);
@@ -369,7 +381,10 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
       startDate: null,
       endDate: null,
       notes: '',
-      status: 'PENDING'
+      status: 'PENDING',
+      pickupLocation: '',
+      returnLocation: '',
+      dailyRate: undefined,
     });
     setCurrentStep(1);
     setSearchTerm('');
@@ -391,6 +406,18 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   }, []);
 
   const handleSubmit = async () => {
+    if (!formData.startDate || !formData.endDate) {
+      setErrorMessage("Veuillez sélectionner les dates de réservation");
+      return;
+    }
+    if (!formData.pickupLocation.trim()) {
+      setErrorMessage("Le lieu de prise en charge est requis");
+      return;
+    }
+    if (!formData.returnLocation.trim()) {
+      setErrorMessage("Le lieu de retour est requis");
+      return;
+    }
     try {
       setLoading(true);
       const reservationData = {
@@ -400,7 +427,10 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
         client: formData.client,
         automobile: formData.automobile,
         notes: formData.notes,
+        pickupLocation: formData.pickupLocation,
+        returnLocation: formData.returnLocation,
         isPaid: reservation?.isPaid || false,
+        dailyRate: formData.dailyRate,
       };
 
       if (reservation) {
@@ -561,9 +591,19 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
       return;
     }
     
-    if (currentStep === 3 && (!formData.startDate || !formData.endDate)) {
-      setErrorMessage("Veuillez sélectionner les dates de réservation");
-      return;
+    if (currentStep === 3) {
+      if (!formData.startDate || !formData.endDate) {
+        setErrorMessage("Veuillez sélectionner les dates de réservation");
+        return;
+      }
+      if (!formData.pickupLocation.trim()) {
+        setErrorMessage("Le lieu de prise en charge est requis");
+        return;
+      }
+      if (!formData.returnLocation.trim()) {
+        setErrorMessage("Le lieu de retour est requis");
+        return;
+      }
     }
     
     setErrorMessage("");
@@ -718,7 +758,11 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                   key={auto?._id}
                   onClick={() => {
                     if (auto?._id) {
-                      setFormData(prev => ({ ...prev, automobile: auto._id }));
+                      setFormData(prev => ({
+                        ...prev,
+                        automobile: auto._id,
+                        dailyRate: auto.dailyRate
+                      }));
                       setErrorMessage("");
                     }
                   }}
@@ -1090,7 +1134,6 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                 {formData.startDate ? format(formData.startDate, 'dd/MM/yyyy') : 'Sélectionner une date'}
               </button>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Date de fin
@@ -1103,7 +1146,37 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
               </button>
             </div>
           </div>
-
+          <div>
+            <Input
+              label="Tarif journalier (MAD)"
+              type="number"
+              value={formData.dailyRate ?? ''}
+              onChange={e => setFormData(prev => ({
+                ...prev,
+                dailyRate: Number(e.target.value)
+              }))}
+              placeholder="Prix journalier"
+              min={0}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <Input
+                label="Lieu de prise en charge (optionnel)"
+                value={formData.pickupLocation}
+                onChange={e => setFormData(prev => ({ ...prev, pickupLocation: e.target.value }))}
+                placeholder="Ex: Aéroport, agence, ..."
+              />
+            </div>
+            <div>
+              <Input
+                label="Lieu de retour (optionnel)"
+                value={formData.returnLocation}
+                onChange={e => setFormData(prev => ({ ...prev, returnLocation: e.target.value }))}
+                placeholder="Ex: Gare, agence, ..."
+              />
+            </div>
+          </div>
           <div>
             <Input
               type="textarea"
@@ -1114,7 +1187,6 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
               placeholder="Ajoutez des notes concernant cette réservation..."
             />
           </div>
-
           {errorMessage && (
             <div className="mt-4 p-4 bg-red-50 rounded-lg">
               <p className="text-sm text-red-600">{errorMessage}</p>
