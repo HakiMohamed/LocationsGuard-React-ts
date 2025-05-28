@@ -20,6 +20,8 @@ import {
   ChevronRightIcon,
   ChevronLeftIcon,
   BanknotesIcon,
+  MagnifyingGlassIcon,
+  Cog8ToothIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import { useMaintenance } from '../contexts/MaintenanceContext';
@@ -37,6 +39,7 @@ import { MaintenanceWithNextDetails } from '../types/maintenance.types';
 import CategoryDetailsModal from '../components/categories/CategoryDetailsModal';
 import ClientDetailsModal from '../components/Clients/ClientDetailsModal';
 import { DollarSignIcon } from 'lucide-react';
+import { Switch } from '@headlessui/react';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: HomeIcon },
@@ -110,6 +113,13 @@ const DashboardLayout = () => {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showClientModal, setShowClientModal] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [isHeaderFixed, setIsHeaderFixed] = useState(() => {
+    const stored = localStorage.getItem('isHeaderFixed');
+    return stored ? JSON.parse(stored) : true;
+  });
+  const settingsRef = useRef<HTMLDivElement>(null);
 
   // Fetch notifications on mount and every 30 seconds
   useEffect(() => {
@@ -139,17 +149,17 @@ const DashboardLayout = () => {
   // Fermer le menu notifications si on clique en dehors
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+      if (notificationsRef.current && 
+          !notificationsRef.current.contains(event.target as Node) &&
+          !(event.target as Element).closest('button[aria-expanded]')) {
         setNotificationsOpen(false);
       }
     }
     if (notificationsOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener('click', handleClickOutside);
     }
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('click', handleClickOutside);
     };
   }, [notificationsOpen]);
 
@@ -178,6 +188,10 @@ const DashboardLayout = () => {
   useEffect(() => {
     localStorage.setItem('sidebarCollapsed', JSON.stringify(sidebarCollapsed));
   }, [sidebarCollapsed]);
+
+  useEffect(() => {
+    localStorage.setItem('isHeaderFixed', JSON.stringify(isHeaderFixed));
+  }, [isHeaderFixed]);
 
   const handleLogout = async () => {
     try {
@@ -227,12 +241,29 @@ const DashboardLayout = () => {
       )
     : [];
 
+  // Fermer le menu settings si on clique en dehors
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (settingsRef.current && 
+          !settingsRef.current.contains(event.target as Node) &&
+          !(event.target as Element).closest('button[aria-expanded]')) {
+        setShowSettingsModal(false);
+      }
+    }
+    if (showSettingsModal) {
+      document.addEventListener('click', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [showSettingsModal]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Sidebar mobile */}
-      <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? '' : 'hidden'}`}>
-        <div className="fixed inset-0 bg-black/60" onClick={() => setSidebarOpen(false)} />
-        <div className="fixed inset-y-0 left-0 flex w-80 flex-col">
+      <div className={`fixed inset-0 z-50 lg:hidden transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className={`fixed inset-0 bg-black/60 transition-opacity duration-300 ease-in-out ${sidebarOpen ? 'opacity-100' : 'opacity-0'}`} onClick={() => setSidebarOpen(false)} />
+        <div className={`fixed inset-y-0 left-0 flex w-80 flex-col transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
           {/* Solid Sidebar for Mobile */}
           <div className="flex h-full flex-col bg-gradient-to-b from-indigo-600 to-purple-700 shadow-2xl">
             {/* Header with logo */}
@@ -376,7 +407,7 @@ const DashboardLayout = () => {
         sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-80'
       }`}>
         {/* Header - Non transparent */}
-        <header className="sticky top-0 z-40 flex h-20 items-center gap-x-4 border-b border-gray-200 bg-white px-6 py-4 sm:gap-x-6 sm:px-8 lg:px-12 shadow-lg">
+        <header className={`${isHeaderFixed ? 'sticky' : 'relative'} top-0 z-40 flex h-20 items-center gap-x-4 border-b border-gray-200 bg-white px-6 py-4 sm:gap-x-6 sm:px-8 lg:px-12 shadow-lg`}>
           <button
             type="button"
             className="lg:hidden -m-2.5 p-2.5 text-gray-600 hover:text-gray-800 transition-colors"
@@ -386,12 +417,22 @@ const DashboardLayout = () => {
             <MenuIcon className="w-6 h-6" />
           </button>
 
+          {/* Bouton de recherche mobile */}
+          <button
+            type="button"
+            className="lg:hidden p-2.5 text-gray-600 hover:text-gray-800 transition-colors"
+            onClick={() => setShowMobileSearch(!showMobileSearch)}
+          >
+            <span className="sr-only">Rechercher</span>
+            <MagnifyingGlassIcon className="w-6 h-6" />
+          </button>
+
           {/* Global Search - Non transparent */}
-          <form className="flex-1 max-w-xl mx-4 relative" autoComplete="off" onSubmit={e => e.preventDefault()}>
-            <div className="relative">
+          <form className={`${showMobileSearch ? 'flex absolute left-0 right-0 top-20 p-4 bg-white border-b border-gray-200 shadow-lg' : 'hidden'} lg:flex lg:relative lg:top-0 lg:border-0 lg:shadow-none lg:p-0 flex-1 max-w-xl lg:mx-4`} autoComplete="off" onSubmit={e => e.preventDefault()}>
+            <div className="relative w-full">
               <span className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                 <div className="text-indigo-400">
-                  <HomeIcon className="w-5 h-5" />
+                  <MagnifyingGlassIcon className="w-5 h-5" />
                 </div>
               </span>
               <input
@@ -409,9 +450,23 @@ const DashboardLayout = () => {
                 }}
                 autoComplete="off"
               />
-              {/* Dropdown results - Non transparent */}
+              {/* Bouton fermer sur mobile */}
+              {showMobileSearch && (
+                <button
+                  type="button"
+                  className="lg:hidden absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
+                  onClick={() => {
+                    setShowMobileSearch(false);
+                    setSearchValue('');
+                    setShowSearchDropdown(false);
+                  }}
+                >
+                  <XMarkIcon className="w-5 h-5" />
+                </button>
+              )}
+              {/* Dropdown results */}
               {showSearchDropdown && searchValue && (
-                <div ref={searchDropdownRef} className="fixed sm:absolute left-1/2 sm:left-0 right-0 sm:right-0 -translate-x-1/2 sm:translate-x-0 top-20 sm:top-auto mt-0 sm:mt-2 bg-white rounded-xl sm:rounded-2xl shadow-2xl z-50 border border-gray-200 max-h-[80vh] sm:max-h-96 overflow-y-auto w-[95vw] sm:w-auto mx-auto">
+                <div ref={searchDropdownRef} className="fixed sm:absolute left-1/2 sm:left-0 right-0 sm:right-0 -translate-x-1/2 sm:translate-x-0 top-[8.5rem] sm:top-auto mt-0 sm:mt-2 bg-white rounded-xl sm:rounded-2xl shadow-2xl z-50 border border-gray-200 max-h-[80vh] sm:max-h-96 overflow-y-auto w-[95vw] sm:w-auto mx-auto">
                   {/* Automobiles */}
                   {filteredAutomobiles.length > 0 && (
                     <div>
@@ -546,12 +601,74 @@ const DashboardLayout = () => {
 
           <div className="flex flex-1 gap-x-4 self-stretch justify-end">
             <div className="flex items-center gap-x-4">
+              {/* Header Settings Button */}
+              <div className="relative">
+                <button
+                  type="button"
+                  className={`relative p-2 text-gray-600 hover:text-gray-800 rounded-xl transition-all duration-200 ${showSettingsModal ? 'bg-gray-100' : 'hover:bg-gray-100'}`}
+                  onClick={() => setShowSettingsModal(!showSettingsModal)}
+                  aria-expanded={showSettingsModal}
+                  title="Paramètres d'affichage"
+                >
+                  <Cog8ToothIcon className="w-5 h-5" />
+                  <span className="sr-only">Paramètres d&apos;affichage</span>
+                </button>
+
+                {/* Settings Dropdown */}
+                {showSettingsModal && (
+                  <div 
+                    ref={settingsRef}
+                    className="fixed sm:absolute left-1/2 sm:left-auto right-0 -translate-x-1/2 sm:translate-x-0 top-20 sm:top-auto mt-0 sm:mt-2 bg-white border border-gray-200 rounded-xl sm:rounded-2xl shadow-2xl z-50 p-0 w-[95vw] sm:w-[24rem] max-h-[80vh] sm:max-h-96 overflow-y-auto mx-auto transform transition-all duration-200 ease-out origin-top"
+                  >
+                    <div className="sticky top-0 bg-white p-3 sm:p-4 font-semibold border-b border-gray-100 text-base sm:text-lg flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Cog8ToothIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                        Paramètres d&apos;affichage
+                      </div>
+                      <button
+                        type="button"
+                        className="sm:hidden p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+                        onClick={() => setShowSettingsModal(false)}
+                      >
+                        <XMarkIcon className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <div className="p-4 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-gray-900">En-tête fixe</span>
+                          <span className="text-xs text-gray-500">
+                            L&apos;en-tête reste visible lors du défilement
+                          </span>
+                        </div>
+                        <Switch
+                          checked={isHeaderFixed}
+                          onChange={setIsHeaderFixed}
+                          className={`${
+                            isHeaderFixed ? 'bg-indigo-600' : 'bg-gray-200'
+                          } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2`}
+                        >
+                          <span className="sr-only">Activer l&apos;en-tête fixe</span>
+                          <span
+                            className={`${
+                              isHeaderFixed ? 'translate-x-5' : 'translate-x-0'
+                            } pointer-events-none relative inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+                          />
+                        </Switch>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Notifications */}
               <div className="relative">
                 <button
                   type="button"
-                  className="relative p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-all duration-200"
-                  onClick={() => setNotificationsOpen((open) => !open)}
+                  className={`relative p-2 text-gray-600 hover:text-gray-800 rounded-xl transition-all duration-200 ${notificationsOpen ? 'bg-gray-100' : 'hover:bg-gray-100'}`}
+                  onClick={() => setNotificationsOpen(!notificationsOpen)}
+                  aria-expanded={notificationsOpen}
                 >
                   <span className="sr-only">Voir les notifications</span>
                   <BellIcon className="w-5 h-5" />
@@ -561,16 +678,29 @@ const DashboardLayout = () => {
                     </span>
                   )}
                 </button>
-                {/* Menu déroulant des notifications - Non transparent */}
+                {/* Menu déroulant des notifications */}
                 {notificationsOpen && (
-                  <div ref={notificationsRef} className="fixed sm:absolute left-1/2 sm:left-auto right-0 -translate-x-1/2 sm:translate-x-0 top-20 sm:top-auto mt-0 sm:mt-2 bg-white border border-gray-200 rounded-xl sm:rounded-2xl shadow-2xl z-50 p-0 w-[95vw] sm:w-[28rem] max-h-[80vh] sm:max-h-96 overflow-y-auto mx-auto">
-                    <div className="p-3 sm:p-4 font-semibold border-b border-gray-100 text-base sm:text-lg flex items-center gap-2">
-                      <BellIcon className="w-4 h-4 sm:w-5 sm:h-5" /> Notifications
+                  <div 
+                    ref={notificationsRef} 
+                    className="fixed sm:absolute left-1/2 sm:left-auto right-0 -translate-x-1/2 sm:translate-x-0 top-20 sm:top-auto mt-0 sm:mt-2 bg-white border border-gray-200 rounded-xl sm:rounded-2xl shadow-2xl z-50 p-0 w-[95vw] sm:w-[28rem] max-h-[80vh] sm:max-h-96 overflow-y-auto mx-auto"
+                  >
+                    <div className="sticky top-0 bg-white p-3 sm:p-4 font-semibold border-b border-gray-100 text-base sm:text-lg flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <BellIcon className="w-4 h-4 sm:w-5 sm:h-5" /> 
+                        Notifications
+                      </div>
+                      <button
+                        type="button"
+                        className="sm:hidden p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+                        onClick={() => setNotificationsOpen(false)}
+                      >
+                        <XMarkIcon className="w-5 h-5" />
+                      </button>
                     </div>
                     {notifications.length === 0 ? (
                       <div className="p-4 sm:p-6 text-gray-500 flex flex-col items-center justify-center">
                         <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-                          <BellIcon className="w-8 h-8 sm:w-10 sm:h-10" />
+                          <BellIcon className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
                         </div>
                         <span>Aucune notification</span>
                       </div>
@@ -580,7 +710,7 @@ const DashboardLayout = () => {
                           <li key={notif.id} className="p-3 sm:p-4 flex gap-2 sm:gap-3 items-start hover:bg-gray-50 transition-all duration-200">
                             <div className="flex-shrink-0">
                               <div className="rounded-lg sm:rounded-xl p-1.5 sm:p-2 bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg">
-                                <BellIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                                <BellIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                               </div>
                             </div>
                             <div className="flex-1 min-w-0">
