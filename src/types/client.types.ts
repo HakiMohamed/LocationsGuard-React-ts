@@ -7,7 +7,8 @@ export interface Client {
   city?: string;
   drivingLicenseDate?: Date;
   drivingLicenseNumber?: string;
-  drivingLicenseImage?: string;
+  drivingLicenseFrontImage?: string;
+  drivingLicenseBackImage?: string;
   drivingLicenseExpirationDate?: Date;
   phoneNumber?: string;
   createdAt: Date;
@@ -23,7 +24,8 @@ export interface CreateClientDto {
   city?: string;
   drivingLicenseDate?: Date;
   drivingLicenseNumber?: string;
-  drivingLicenseImage?: string;
+  drivingLicenseFrontImage?: string;
+  drivingLicenseBackImage?: string;
   drivingLicenseExpirationDate?: Date;
   
 }
@@ -37,6 +39,7 @@ export interface UpdateClientDto {
   city?: string;
   drivingLicenseDate?: Date;
   drivingLicenseNumber?: string;
-  drivingLicenseImage?: string;
+  drivingLicenseFrontImage?: string;
+  drivingLicenseBackImage?: string;
   drivingLicenseExpirationDate?: Date;
 } 

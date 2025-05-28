@@ -411,7 +411,7 @@ const DashboardLayout = () => {
               />
               {/* Dropdown results - Non transparent */}
               {showSearchDropdown && searchValue && (
-                <div ref={searchDropdownRef} className="absolute left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl z-50 border border-gray-200 max-h-96 overflow-y-auto">
+                <div ref={searchDropdownRef} className="fixed sm:absolute left-1/2 sm:left-0 right-0 sm:right-0 -translate-x-1/2 sm:translate-x-0 top-20 sm:top-auto mt-0 sm:mt-2 bg-white rounded-xl sm:rounded-2xl shadow-2xl z-50 border border-gray-200 max-h-[80vh] sm:max-h-96 overflow-y-auto w-[95vw] sm:w-auto mx-auto">
                   {/* Automobiles */}
                   {filteredAutomobiles.length > 0 && (
                     <div>
@@ -563,35 +563,35 @@ const DashboardLayout = () => {
                 </button>
                 {/* Menu déroulant des notifications - Non transparent */}
                 {notificationsOpen && (
-                  <div ref={notificationsRef} className="absolute right-0 mt-2 w-[28rem] max-h-96 overflow-y-auto bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 p-0">
-                    <div className="p-4 font-semibold border-b border-gray-100 text-lg flex items-center gap-2">
-                      <BellIcon className="w-5 h-5" /> Notifications
+                  <div ref={notificationsRef} className="fixed sm:absolute left-1/2 sm:left-auto right-0 -translate-x-1/2 sm:translate-x-0 top-20 sm:top-auto mt-0 sm:mt-2 bg-white border border-gray-200 rounded-xl sm:rounded-2xl shadow-2xl z-50 p-0 w-[95vw] sm:w-[28rem] max-h-[80vh] sm:max-h-96 overflow-y-auto mx-auto">
+                    <div className="p-3 sm:p-4 font-semibold border-b border-gray-100 text-base sm:text-lg flex items-center gap-2">
+                      <BellIcon className="w-4 h-4 sm:w-5 sm:h-5" /> Notifications
                     </div>
                     {notifications.length === 0 ? (
-                      <div className="p-6 text-gray-500 flex flex-col items-center justify-center">
-                        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-                          <BellIcon className="w-10 h-10" />
+                      <div className="p-4 sm:p-6 text-gray-500 flex flex-col items-center justify-center">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                          <BellIcon className="w-8 h-8 sm:w-10 sm:h-10" />
                         </div>
                         <span>Aucune notification</span>
                       </div>
                     ) : (
                       <ul className="divide-y divide-gray-100">
                         {notifications.map((notif) => (
-                          <li key={notif.id} className="p-4 flex gap-3 items-start hover:bg-gray-50 transition-all duration-200">
+                          <li key={notif.id} className="p-3 sm:p-4 flex gap-2 sm:gap-3 items-start hover:bg-gray-50 transition-all duration-200">
                             <div className="flex-shrink-0">
-                              <div className="rounded-xl p-2 bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg">
-                                <BellIcon className="w-5 h-5" />
+                              <div className="rounded-lg sm:rounded-xl p-1.5 sm:p-2 bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg">
+                                <BellIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                               </div>
                             </div>
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
-                                <span className="font-semibold text-gray-800">{notif.title}</span>
+                                <span className="font-semibold text-gray-800 text-sm sm:text-base">{notif.title}</span>
                                 {notif.type === 'MAINTENANCE' && (
-                                  <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-600 border border-blue-200">Maintenance</span>
+                                  <span className="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-600 border border-blue-200">Maintenance</span>
                                 )}
                               </div>
                               <div className="text-xs text-gray-500 mb-1">{notif.date && new Date(notif.date).toLocaleDateString()}</div>
-                              <div className="text-gray-700 text-sm">{notif.message}</div>
+                              <div className="text-gray-700 text-xs sm:text-sm line-clamp-2">{notif.message}</div>
                             </div>
                           </li>
                         ))}
