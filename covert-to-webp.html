@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Convertisseur WebP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-md p-6">
+    <h1 class="text-2xl font-bold mb-4 text-center">Convertisseur d'Images en WebP</h1>
+
+    <input type="file" id="imageInput" multiple accept="image/*" class="mb-4 block w-full">
+    
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700">Qualité de compression (1-100):</label>
+      <input type="range" id="qualitySlider" min="1" max="100" value="80" class="w-full">
+      <span id="qualityValue" class="text-sm">80</span>
+    </div>
+
+    <button id="convertBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full">
+      Convertir en WebP
+    </button>
+
+    <div id="output" class="mt-6 space-y-4"></div>
+  </div>
+
+  <script>
+    const convertBtn = document.getElementById('convertBtn');
+    const imageInput = document.getElementById('imageInput');
+    const output = document.getElementById('output');
+    const qualitySlider = document.getElementById('qualitySlider');
+    const qualityValue = document.getElementById('qualityValue');
+
+    qualitySlider.addEventListener('input', (e) => {
+      qualityValue.textContent = e.target.value;
+    });
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    convertBtn.addEventListener('click', () => {
+      const files = imageInput.files;
+      if (!files.length) return alert('Veuillez sélectionner des images.');
+
+      output.innerHTML = ''; // Clear previous output
+
+      Array.from(files).forEach(file => {
+        const originalSize = file.size;
+        const container = document.createElement('div');
+        container.className = 'p-4 border rounded-lg';
+        
+        const sizeInfo = document.createElement('div');
+        sizeInfo.className = 'mb-2 text-sm';
+        sizeInfo.textContent = `Taille originale: ${formatFileSize(originalSize)}`;
+        container.appendChild(sizeInfo);
+
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            // Calculer les nouvelles dimensions pour réduire la taille
+            let width = img.width;
+            let height = img.height;
+            const maxDimension = 1920; // Limite maximale pour la dimension la plus grande
+
+            if (width > height && width > maxDimension) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            } else if (height > maxDimension) {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Compression maximale
+            const quality = qualitySlider.value / 100;
+            canvas.toBlob(blob => {
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = file.name.replace(/\.[^/.]+$/, '') + '.webp';
+              link.className = 'block';
+              
+              const newSizeInfo = document.createElement('div');
+              newSizeInfo.className = 'text-sm text-green-600';
+              newSizeInfo.textContent = `Nouvelle taille: ${formatFileSize(blob.size)} (${Math.round((blob.size / originalSize) * 100)}% de l'original)`;
+              
+              link.innerHTML = `
+                <img src="${url}" class="w-full rounded">
+                <span class="text-sm text-center block mt-1">Télécharger</span>
+              `;
+              
+              container.appendChild(link);
+              container.appendChild(newSizeInfo);
+              
+            }, 'image/webp', quality);
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+        output.appendChild(container);
+      });
+    });
+  </script>
+</body>
+</html>

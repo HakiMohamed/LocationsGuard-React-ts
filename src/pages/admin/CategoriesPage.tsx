@@ -204,10 +204,10 @@ const CategoriesPage: React.FC = () => {
                           <img
                             src={category.imageUrl}
                             alt={category.name}
-                            className="flex-shrink-0 h-10 w-10 rounded-xl object-cover border shadow-sm group-hover:scale-110 transition-transform duration-200"
+                            className="flex-shrink-0 h-16 w-20 rounded-xl object-cover border shadow-sm group-hover:scale-110 transition-transform duration-200"
                           />
                         ) : (
-                          <div className="flex-shrink-0 h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-medium shadow-sm group-hover:scale-110 transition-transform duration-200">
+                          <div className="flex-shrink-0 h-16 w-20 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-lg font-medium shadow-sm group-hover:scale-110 transition-transform duration-200">
                             {getInitials(category.name)}
                           </div>
                         )}

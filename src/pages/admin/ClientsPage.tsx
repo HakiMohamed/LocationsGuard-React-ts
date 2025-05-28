@@ -18,7 +18,7 @@ const ClientsPage: React.FC = () => {
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchClients();
@@ -77,7 +77,7 @@ const ClientsPage: React.FC = () => {
   // Function to determine which page buttons to show
   const getPageNumbers = () => {
     const pageNumbers = [];
-    const maxPagesToShow = 5; // Show max 5 page numbers at once
+    const maxPagesToShow = 10; // Show max 5 page numbers at once
 
     if (totalPages <= maxPagesToShow) {
       for (let i = 1; i <= totalPages; i++) {
