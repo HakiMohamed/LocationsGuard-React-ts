@@ -2,16 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Reservation } from '../../types/reservation.types';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
-import { 
-  PlusIcon, 
-  ChevronLeftIcon, 
+
+import {
+  PlusIcon,
+  ChevronLeftIcon,
   ChevronRightIcon,
   CalendarDaysIcon,
   ClockIcon,
   UserIcon,
   TruckIcon,
   XMarkIcon,
-  EyeIcon
+  EyeIcon,
+  PencilIcon
 } from '@heroicons/react/24/outline';
 import ReservationModal from '../Reservations/ReservationModal';
 import ReservationDetailsModal from '../Reservations/ReservationDetailsModal';
@@ -39,6 +41,7 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Animation handler for month transitions
   const handleMonthChange = (direction: 'prev' | 'next') => {
@@ -117,15 +120,24 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
         {weekDays.map((day, index) => (
           <div
             key={day}
-            className={`text-center py-4 text-sm font-semibold tracking-wide ${
-              index >= 5 ? 'text-rose-600' : 'text-slate-600'
-            }`}
+            className={`text-center py-4 text-sm font-semibold tracking-wide ${index >= 5 ? 'text-rose-600' : 'text-slate-600'
+              }`}
           >
             {day}
           </div>
         ))}
       </div>
     );
+  };
+  const openUpdateModal = (reservation: Reservation) => {
+    setSelectedReservation(reservation);
+    setIsModalOpen(true);
+  };
+
+  const handleEditReservation = (reservation: Reservation) => {
+    setSelectedReservation(reservation);
+    setShowReservationModal(true);
+    setShowDayModal(false);
   };
 
   const renderCalendarDays = () => {
@@ -161,10 +173,10 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
           key={`day-${day}`}
           onClick={() => handleDayClick(date)}
           className={`h-28 p-2 transition-all duration-300 cursor-pointer rounded-xl group relative overflow-hidden
-            ${isToday 
-              ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-xl shadow-indigo-200/50 scale-105' 
-              : hasReservationsForDay 
-                ? 'bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border border-blue-200/50 shadow-sm hover:shadow-md' 
+            ${isToday
+              ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-xl shadow-indigo-200/50 scale-105'
+              : hasReservationsForDay
+                ? 'bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border border-blue-200/50 shadow-sm hover:shadow-md'
                 : 'bg-white hover:bg-slate-50 border border-slate-200/50 hover:border-slate-300/50 shadow-sm hover:shadow-md'
             }
             hover:scale-[1.02] hover:-translate-y-1
@@ -174,10 +186,10 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
           <div className="flex items-start justify-between mb-2">
             <span
               className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-sm font-bold transition-all duration-200
-                ${isToday 
-                  ? 'bg-white/20 text-white backdrop-blur-sm' 
-                  : hasReservationsForDay 
-                    ? 'bg-indigo-100 text-indigo-700 group-hover:bg-indigo-200' 
+                ${isToday
+                  ? 'bg-white/20 text-white backdrop-blur-sm'
+                  : hasReservationsForDay
+                    ? 'bg-indigo-100 text-indigo-700 group-hover:bg-indigo-200'
                     : 'text-slate-700 group-hover:bg-slate-100'
                 }
               `}
@@ -186,9 +198,8 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
             </span>
             {hasReservationsForDay && (
               <div className="flex items-center space-x-1">
-                <span className={`inline-flex items-center justify-center w-5 h-5 text-xs font-bold rounded-full ${
-                  isToday ? 'bg-white/20 text-white' : 'bg-indigo-500 text-white'
-                }`}>
+                <span className={`inline-flex items-center justify-center w-5 h-5 text-xs font-bold rounded-full ${isToday ? 'bg-white/20 text-white' : 'bg-indigo-500 text-white'
+                  }`}>
                   {reservationCount}
                 </span>
               </div>
@@ -201,11 +212,10 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
               {dayReservations.slice(0, 2).map((reservation, index) => (
                 <div
                   key={`reservation-${reservation._id}-${index}`}
-                  className={`text-xs truncate px-2 py-1 rounded-md transition-all duration-200 ${
-                    isToday 
-                      ? 'bg-white/20 text-white backdrop-blur-sm' 
+                  className={`text-xs truncate px-2 py-1 rounded-md transition-all duration-200 ${isToday
+                      ? 'bg-white/20 text-white backdrop-blur-sm'
                       : 'bg-white shadow-sm border border-slate-200/50 text-slate-700 group-hover:shadow-md'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center space-x-1">
                     <TruckIcon className="w-3 h-3 flex-shrink-0" />
@@ -216,11 +226,10 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
                 </div>
               ))}
               {reservationCount > 2 && (
-                <div className={`text-xs px-2 py-1 rounded-md font-medium ${
-                  isToday 
-                    ? 'text-white/80' 
+                <div className={`text-xs px-2 py-1 rounded-md font-medium ${isToday
+                    ? 'text-white/80'
                     : 'text-indigo-600'
-                }`}>
+                  }`}>
                   +{reservationCount - 2} autres
                 </div>
               )}
@@ -242,50 +251,54 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
       <div className="relative">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-5 overflow-hidden backdrop-blur-sm">
           {/* Header */}
-          <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-6 py-8">
+          <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-4 sm:px-6 py-6 sm:py-8">
             <div className="flex items-center justify-between">
               <button
                 onClick={() => handleMonthChange('prev')}
-                className="p-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all duration-200 hover:scale-110 group"
+                className="p-2 sm:p-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all duration-200 hover:scale-110 group"
               >
-                <ChevronLeftIcon className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
+                <ChevronLeftIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white group-hover:scale-110 transition-transform" />
               </button>
-              
+
               <div className={`text-center transition-all duration-300 ${isAnimating ? 'scale-95 opacity-50' : 'scale-100 opacity-100'}`}>
-                <h2 className="text-3xl font-bold text-white mb-1 tracking-tight">
+                <h2 className="text-xl sm:text-3xl font-bold text-white mb-1 tracking-tight">
                   {getMonthName(currentDate)}
                 </h2>
-                <p className="text-white/80 text-lg font-medium">
+                <p className="text-white/80 text-base sm:text-lg font-medium">
                   {currentDate.getFullYear()}
                 </p>
               </div>
 
               <button
                 onClick={() => handleMonthChange('next')}
-                className="p-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all duration-200 hover:scale-110 group"
+                className="p-2 sm:p-3 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all duration-200 hover:scale-110 group"
               >
-                <ChevronRightIcon className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
+                <ChevronRightIcon className="w-4 h-4 sm:w-5 sm:h-5 text-white group-hover:scale-110 transition-transform" />
               </button>
             </div>
           </div>
 
           {/* Calendar Grid */}
-          <div className="p-6 bg-gradient-to-br from-slate-50 to-white">
-            {renderCalendarHeader()}
-            <div className={`grid grid-cols-7 gap-2 transition-all duration-300 ${isAnimating ? 'scale-95 opacity-50' : 'scale-100 opacity-100'}`}>
-              {renderCalendarDays()}
+          <div className="p-2 sm:p-6 bg-gradient-to-br from-slate-50 to-white">
+            <div className="overflow-x-auto md:overflow-x-visible hide-scrollbar">
+              <div className="min-w-[800px]">
+                {renderCalendarHeader()}
+                <div className={`grid grid-cols-7 gap-1 sm:gap-2 transition-all duration-300 ${isAnimating ? 'scale-95 opacity-50' : 'scale-100 opacity-100'}`}>
+                  {renderCalendarDays()}
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Legend */}
-          <div className="px-6 py-4 bg-slate-50 border-t border-slate-200/50">
-            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-slate-600">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 bg-slate-50 border-t border-slate-200/50">
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs sm:text-sm text-slate-600">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600"></div>
+                <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600"></div>
                 <span className="font-medium">Aujourd'hui</span>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-400 to-indigo-400"></div>
+                <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-gradient-to-r from-blue-400 to-indigo-400"></div>
                 <span className="font-medium">Avec réservations</span>
               </div>
             </div>
@@ -309,7 +322,7 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
           </Transition.Child>
 
           <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4">
+            <div className="flex min-h-full items-center justify-center p-2 sm:p-4">
               <Transition.Child
                 as={Fragment}
                 enter="ease-out duration-300"
@@ -319,60 +332,60 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-3xl bg-white shadow-2xl transition-all">
+                <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl sm:rounded-3xl bg-white shadow-2xl transition-all">
                   {/* Modal Header */}
-                  <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-8 py-6">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center space-x-4">
-                        <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
-                          <CalendarDaysIcon className="h-8 w-8 text-white" />
+                  <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-4 sm:px-8 py-4 sm:py-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center space-x-3 sm:space-x-4">
+                        <div className="p-2 sm:p-3 bg-white/10 rounded-xl sm:rounded-2xl backdrop-blur-sm">
+                          <CalendarDaysIcon className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
                         </div>
                         <div>
-                          <h3 className="text-2xl font-bold text-white">
-                            {selectedDate?.toLocaleDateString('fr-FR', { 
+                          <h3 className="text-lg sm:text-2xl font-bold text-white">
+                            {selectedDate?.toLocaleDateString('fr-FR', {
                               day: 'numeric',
                               month: 'long',
                               year: 'numeric'
                             })}
                           </h3>
-                          <p className="text-white/80 text-sm font-medium">
+                          <p className="text-white/80 text-xs sm:text-sm font-medium">
                             {getReservationsForDate(selectedDate!).length} réservation(s)
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2 sm:space-x-3">
                         <button
                           onClick={() => {
                             setShowDayModal(false);
                             setShowReservationModal(true);
                           }}
-                          className="inline-flex items-center px-6 py-3 rounded-2xl bg-white text-indigo-600 hover:bg-indigo-50 transition-all duration-200 font-semibold text-sm shadow-lg hover:shadow-xl hover:scale-105"
+                          className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl bg-white text-indigo-600 hover:bg-indigo-50 transition-all duration-200 font-semibold text-xs sm:text-sm shadow-lg hover:shadow-xl hover:scale-105"
                         >
-                          <PlusIcon className="h-5 w-5 mr-2" />
+                          <PlusIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
                           Nouvelle réservation
                         </button>
                         <button
                           onClick={() => setShowDayModal(false)}
-                          className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all duration-200 hover:scale-110"
+                          className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all duration-200 hover:scale-110"
                         >
-                          <XMarkIcon className="h-6 w-6 text-white" />
+                          <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                         </button>
                       </div>
                     </div>
                   </div>
 
                   {/* Modal Content */}
-                  <div className="p-8 max-h-[70vh] overflow-y-auto bg-gradient-to-br from-slate-50 to-white">
+                  <div className="p-4 sm:p-8 max-h-[70vh] overflow-y-auto bg-gradient-to-br from-slate-50 to-white">
                     {selectedDate && getReservationsForDate(selectedDate).length === 0 ? (
                       // Empty State
-                      <div className="flex justify-center items-center h-64">
-                        <div className="text-center space-y-6">
-                          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100">
-                            <CalendarDaysIcon className="h-12 w-12 text-indigo-500" />
+                      <div className="flex justify-center items-center h-48 sm:h-64">
+                        <div className="text-center space-y-4 sm:space-y-6">
+                          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100">
+                            <CalendarDaysIcon className="h-8 w-8 sm:h-12 sm:w-12 text-indigo-500" />
                           </div>
-                          <div className="space-y-3">
-                            <h4 className="text-xl font-semibold text-slate-800">Aucune réservation</h4>
-                            <p className="text-slate-600 max-w-md">
+                          <div className="space-y-2 sm:space-y-3">
+                            <h4 className="text-lg sm:text-xl font-semibold text-slate-800">Aucune réservation</h4>
+                            <p className="text-slate-600 text-sm sm:text-base max-w-md">
                               Ce jour ne contient aucune réservation. Créez-en une nouvelle pour commencer.
                             </p>
                             <button
@@ -380,9 +393,9 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
                                 setShowDayModal(false);
                                 setShowReservationModal(true);
                               }}
-                              className="inline-flex items-center px-6 py-3 text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl hover:scale-105"
+                              className="inline-flex items-center px-4 sm:px-6 py-2 sm:py-3 text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl sm:rounded-2xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 font-semibold text-xs sm:text-sm shadow-lg hover:shadow-xl hover:scale-105"
                             >
-                              <PlusIcon className="h-5 w-5 mr-2" />
+                              <PlusIcon className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
                               Créer une réservation
                             </button>
                           </div>
@@ -390,41 +403,53 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
                       </div>
                     ) : (
                       // Reservations List
-                      <div className="space-y-4">
+                      <div className="space-y-3 sm:space-y-4">
                         {selectedDate && getReservationsForDate(selectedDate).map((reservation, index) => (
                           <div
                             key={reservation._id}
-                            className="group bg-white p-6 rounded-2xl shadow-sm border border-slate-200/50 hover:shadow-xl hover:border-indigo-200 transition-all duration-300 cursor-pointer hover:scale-[1.02] hover:-translate-y-1"
+                            className="group bg-white p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-sm border border-slate-200/50 hover:shadow-xl hover:border-indigo-200 transition-all duration-300 cursor-pointer hover:scale-[1.02] hover:-translate-y-1"
                             onClick={() => {
                               setSelectedReservation(reservation);
                               setShowDetailsModal(true);
                               setShowDayModal(false);
                             }}
                           >
-                            <div className="flex justify-between items-start">
-                              <div className="flex space-x-4">
-                                <div className="p-3 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl">
-                                  <TruckIcon className="w-6 h-6 text-indigo-600" />
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                              <div className="flex space-x-3 sm:space-x-4">
+                                <div className="p-2 sm:p-3 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-xl sm:rounded-2xl">
+                                  {reservation.automobile?.images && reservation.automobile?.images[0] ? (
+                                    <img
+                                      src={reservation.automobile?.images[0]}
+                                      alt={`${reservation.automobile?.brand} ${reservation.automobile?.model}`}
+                                      className="w-24 h-16 sm:w-30 sm:h-20 object-cover transform group-hover:scale-110 transition-transform duration-300"
+                                    />
+                                  ) : (
+                                    <div className="w-24 h-16 sm:w-30 sm:h-20 bg-gray-200 flex items-center justify-center">
+                                      <svg className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                      </svg>
+                                    </div>
+                                  )}
                                 </div>
-                                <div className="space-y-3">
+                                <div className="space-y-2 sm:space-y-3">
                                   <div>
-                                    <h4 className="font-bold text-lg text-slate-800 group-hover:text-indigo-600 transition-colors">
+                                    <h4 className="font-bold text-base sm:text-lg text-slate-800 group-hover:text-indigo-600 transition-colors">
                                       {reservation.automobile?.brand} {reservation.automobile?.model}
                                     </h4>
-                                    <p className="text-slate-500 text-sm font-medium">
+                                    <p className="text-slate-500 text-xs sm:text-sm font-medium">
                                       {reservation.automobile?.licensePlate}
                                     </p>
                                   </div>
-                                  
-                                  <div className="flex items-center space-x-4 text-sm text-slate-600">
+
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-slate-600">
                                     <div className="flex items-center space-x-2">
-                                      <UserIcon className="w-4 h-4" />
+                                      <UserIcon className="w-3 h-3 sm:w-4 sm:h-4" />
                                       <span className="font-medium">
                                         {reservation.client?.firstName} {reservation.client?.lastName}
                                       </span>
                                     </div>
                                     <div className="flex items-center space-x-2">
-                                      <ClockIcon className="w-4 h-4" />
+                                      <ClockIcon className="w-3 h-3 sm:w-4 sm:h-4" />
                                       <span>
                                         {new Date(reservation.startDate).toLocaleDateString('fr-FR')} - {new Date(reservation.endDate).toLocaleDateString('fr-FR')}
                                       </span>
@@ -432,13 +457,22 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
                                   </div>
                                 </div>
                               </div>
-                              
-                              <div className="flex items-center space-x-3">
-                                <span className={`px-4 py-2 text-sm font-bold rounded-full text-white shadow-lg ${getStatusColor(reservation.status)}`}>
+
+                              <div className="flex items-center space-x-2 sm:space-x-3">
+                                <span className={`px-3 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm font-bold rounded-full text-white shadow-lg ${getStatusColor(reservation.status)}`}>
                                   {reservation.status}
                                 </span>
-                                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                  <EyeIcon className="w-5 h-5 text-slate-400" />
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center space-x-2">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleEditReservation(reservation);
+                                    }}
+                                    className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                                  >
+                                    <PencilIcon className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 hover:text-indigo-500" />
+                                  </button>
+                                  <EyeIcon className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
                                 </div>
                               </div>
                             </div>
@@ -457,8 +491,12 @@ const CalendarComponent: React.FC<CalendarComponentProps> = ({
       {/* Reservation Creation Modal */}
       <ReservationModal
         isOpen={showReservationModal}
-        onClose={() => setShowReservationModal(false)}
-        reservation={null}
+        onClose={() => {
+          setShowReservationModal(false);
+          setSelectedReservation(null);
+        }}
+        reservation={selectedReservation}
+        onSubmit={() => {}}
       />
 
       {/* Reservation Details Modal */}

@@ -6,10 +6,12 @@ interface StatsContextType {
   reservationsStats: any;
   automobilesStats: any;
   clientsStats: any;
+  benefitsStats: any;
   fetchExpensesStats: (params?: { startDate?: string; endDate?: string; period?: string }) => Promise<void>;
   fetchReservationStats: (params?: { startDate?: string; endDate?: string; period?: string }) => Promise<void>;
   fetchAutomobileStats: (params?: { startDate?: string; endDate?: string; period?: string }) => Promise<void>;
   fetchClientStats: (params?: { startDate?: string; endDate?: string; period?: string }) => Promise<void>;
+  fetchBenefitsStats: (params?: { startDate?: string; endDate?: string }) => Promise<void>;
   loading: boolean;
   error: string | null;
 }
@@ -21,6 +23,7 @@ export const StatsProvider = ({ children }: { children: ReactNode }) => {
   const [reservationsStats, setReservationsStats] = useState<any>(null);
   const [automobilesStats, setAutomobilesStats] = useState<any>(null);
   const [clientsStats, setClientsStats] = useState<any>(null);
+  const [benefitsStats, setBenefitsStats] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -76,16 +79,31 @@ export const StatsProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  const fetchBenefitsStats = useCallback(async (params?: { startDate?: string; endDate?: string }) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await statsService.getBenefitsStats(params);
+      setBenefitsStats(data);
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors du chargement des statistiques de bénéfices');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return (
     <StatsContext.Provider value={{
       expensesStats,
       reservationsStats,
       automobilesStats,
       clientsStats,
+      benefitsStats,
       fetchExpensesStats,
       fetchReservationStats,
       fetchAutomobileStats,
       fetchClientStats,
+      fetchBenefitsStats,
       loading,
       error
     }}>

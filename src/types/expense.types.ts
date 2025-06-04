@@ -3,7 +3,7 @@ export enum ExpenseType {
   ELECTRICITY = 'Électricité',
   RENT = 'Loyer',
   WIFI = 'Wifi',
-  SALARY = 'Salaire',
+  SALARY = 'Salaire (employé)',
   TAX = 'Taxe',
   MAINTENANCE_LOCAL = 'Maintenance de local',
   OTHER = 'Autre'

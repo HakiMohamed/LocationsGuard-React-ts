@@ -297,16 +297,21 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
   useEffect(() => {
     if (reservation) {
       setFormData({
-        client: reservation.client._id,
-        automobile: reservation.automobile._id,
+        client: reservation.client?._id || '',
+        automobile: reservation.automobile?._id || '',
         startDate: new Date(reservation.startDate),
         endDate: new Date(reservation.endDate),
         notes: reservation.notes || '',
         status: reservation.status,
         pickupLocation: reservation.pickupLocation || '',
         returnLocation: reservation.returnLocation || '',
-        dailyRate: reservation.dailyRate || reservation.automobile.dailyRate,
+        dailyRate: reservation.dailyRate || reservation.automobile?.dailyRate,
       });
+
+      // Si le client a été supprimé, afficher un message d'erreur
+      if (!reservation.client) {
+        setErrorMessage("Le client associé à cette réservation n'existe plus. Veuillez sélectionner un nouveau client.");
+      }
     } else {
       setFormData({
         client: '',
@@ -418,6 +423,15 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
       setErrorMessage("Le lieu de retour est requis");
       return;
     }
+    if (!formData.client) {
+      setErrorMessage("Veuillez sélectionner un client");
+      return;
+    }
+    if (!formData.automobile) {
+      setErrorMessage("Veuillez sélectionner un véhicule");
+      return;
+    }
+
     try {
       setLoading(true);
       const reservationData = {
@@ -442,9 +456,11 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
       }
       resetStates();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur lors de la création/mise à jour de la réservation:', error);
-      toast.error('Une erreur est survenue');
+      // Extraire le message d'erreur du backend s'il est disponible
+      const backendErrorMessage = error.response?.data?.error?.message;
+      toast.error(backendErrorMessage || 'Une erreur est survenue lors de la création/mise à jour de la réservation');
     } finally {
       setLoading(false);
     }
@@ -532,11 +548,12 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
 
   // Logique de filtrage et pagination des clients
   const getFilteredAndPaginatedClients = useCallback(() => {
-    // Appliquer la recherche sur tous les champs
+    // Appliquer la recherche sur tous les champs et filtrer les clients null
     const filtered = clients?.filter(client => 
+      client && // Vérifier que le client existe
       `${client.firstName} ${client.lastName}`.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
       client.email.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-      client.phoneNumber.toLowerCase().includes(clientSearchTerm.toLowerCase())
+      (client.phoneNumber?.toLowerCase() || '').includes(clientSearchTerm.toLowerCase())
     ) || [];
     
     // Calculer les indices pour la pagination
@@ -1007,22 +1024,29 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
               <div
                 key={client._id}
                 onClick={() => {
+                  // Empêcher la sélection d'un client bloqué
+                  if (!client.canMakeReservation) {
+                    toast.error(`Ce client ne peut pas faire de réservation car il a été bloqué par l'administrateur pour la raison suivante : ${client.blockForReservationReason || 'Raison non spécifiée'}`);
+                    return;
+                  }
                   setFormData(prev => ({ ...prev, client: client._id }));
                   setErrorMessage("");
                 }}
                 className={`
-                  p-4 rounded-xl cursor-pointer transition-all duration-300
+                  p-4 rounded-xl cursor-pointer transition-all duration-300 relative
                   ${formData.client === client._id
                     ? 'ring-2 ring-indigo-500 bg-indigo-50 transform scale-[1.02]'
-                    : 'bg-white hover:bg-gray-50'
+                    : client.canMakeReservation === false
+                      ? 'bg-red-50 border border-red-300 cursor-not-allowed opacity-70'
+                      : 'bg-white hover:bg-gray-50'
                   }
                 `}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
-                      <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                        <span className="text-sm font-medium text-indigo-600">
+                      <div className={`w-10 h-10 rounded-full  flex items-center justify-center ${client.canMakeReservation === false ? 'bg-red-100' : 'bg-indigo-100'}`}>
+                        <span className={`text-sm font-medium ${client.canMakeReservation === false ? 'text-red-800' : 'text-indigo-600'}`}>
                           {client.firstName[0]}{client.lastName[0]}
                         </span>
                       </div>
@@ -1035,10 +1059,20 @@ const ReservationModal: React.FC<ReservationModalProps> = ({
                       <p className="text-sm text-gray-500">{client.phoneNumber}</p>
                     </div>
                   </div>
-                  {formData.client === client._id && (
+                  {formData.client === client._id && client.canMakeReservation !== false && (
                     <CheckIcon className="h-5 w-5 text-indigo-600" />
                   )}
+                   {client.canMakeReservation === false && (
+                     <span className="absolute top-2 right-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                       Bloqué
+                     </span>
+                   )}
                 </div>
+                {client.canMakeReservation === false && client.blockForReservationReason && (
+                  <div className="mt-2 text-xs text-red-700 italic">
+                    Raison : {client.blockForReservationReason}
+                  </div>
+                )}
               </div>
             ))}
           </div>

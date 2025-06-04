@@ -270,15 +270,9 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
               className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
               <option value="">Sélectionner un type</option>
-              {Object.values(MaintenanceType).map((type) => (
-                <option key={type} value={type}>
-                  {type === MaintenanceType.VIDANGE ? 'Vidange' :
-                   type === MaintenanceType.FILTRE_AIR ? 'Filtre à air' :
-                   type === MaintenanceType.FILTRE_HUILE ? 'Filtre à huile' :
-                   type === MaintenanceType.FILTRE_CARBURANT ? 'Filtre à carburant' :
-                   type === MaintenanceType.FREINS ? 'Freins' :
-                   type === MaintenanceType.PNEUS ? 'Pneus' :
-                   type === MaintenanceType.AUTRE ? 'Autre' : type}
+              {Object.entries(MaintenanceType).map(([key, value]) => (
+                <option key={key} value={key}>
+                  {value}
                 </option>
               ))}
             </select>
@@ -316,6 +310,7 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({
               type="date"
               value={formData.date}
               onChange={(e) => setFormData((prev) => ({ ...prev, date: e.target.value }))}
+              max={new Date().toISOString().split('T')[0]}
             />
           </div>
           <Input

@@ -1,5 +1,5 @@
 import api from './api.service';
-import { Client} from '../types/client.types';
+import { Client, UpdateReservationPossibilityDto } from '../types/client.types';
 
 interface ApiResponse<T> {
   data: {
@@ -49,6 +49,15 @@ export const clientService = {
     const jsonData = Object.fromEntries(formData.entries());
     
     const response = await api.put<ApiResponse<Client>>(`/clients/${id}`, jsonData, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data.data;
+  },
+
+  updateReservationPossibility: async (id: string, data: UpdateReservationPossibilityDto): Promise<Client> => {
+    const response = await api.patch<ApiResponse<Client>>(`/clients/${id}/reservationPoussibilite`, data, {
       headers: {
         'Content-Type': 'application/json',
       },

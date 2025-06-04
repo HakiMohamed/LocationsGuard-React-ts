@@ -4,7 +4,8 @@ import { Client } from '../../types/client.types';
 import { toast } from 'react-hot-toast';
 import ClientModal from '../../components/Clients/ClientModal';
 import ClientDetailsModal from '../../components/Clients/ClientDetailsModal';
-import { EyeIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, ExclamationTriangleIcon, CheckCircleIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { clientService } from '../../services/client.service';
 
 const ClientsPage: React.FC = () => {
   const { clients, loading, error, fetchClients, createClient, updateClient, deleteClient } = useClient();
@@ -15,6 +16,11 @@ const ClientsPage: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [isReasonModalOpen, setIsReasonModalOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [blockReason, setBlockReason] = useState('');
+  const [reservationStatus, setReservationStatus] = useState<'authorized' | 'blocked'>('authorized');
+  const [canMakeReservation, setCanMakeReservation] = useState(true);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -152,6 +158,43 @@ const ClientsPage: React.FC = () => {
     }));
   };
 
+  // Helper function to check if client can make reservations
+  const canClientMakeReservations = (client: Client) => {
+    return client.canMakeReservation === undefined ? true : client.canMakeReservation;
+  };
+
+  const handleQuickStatusUpdate = async (client: Client, newStatus: 'authorized' | 'blocked') => {
+    try {
+      await clientService.updateReservationPossibility(client._id, {
+        canMakeReservation: newStatus === 'authorized',
+        blockForReservationReason: newStatus === 'blocked' ? 'Raison non spécifiée' : undefined
+      });
+      toast.success('Possibilité de réservation mis à jour avec succès');
+      fetchClients();
+    } catch (error) {
+      console.error('Error updating reservation status:', error);
+      toast.error('Erreur lors de la mise à jour du statut');
+    }
+  };
+
+  const handleUpdateReservationStatus = async () => {
+    try {
+      await clientService.updateReservationPossibility(editingClient!._id, {
+        canMakeReservation: reservationStatus === 'authorized',
+        blockForReservationReason: reservationStatus === 'blocked' ? blockReason : undefined
+      });
+      toast.success('Possibilité de réservation mis à jour avec succès');
+      setIsReasonModalOpen(false);
+      setEditingClient(null);
+      setBlockReason('');
+      setReservationStatus('authorized');
+      fetchClients();
+    } catch (error) {
+      console.error('Error updating reservation status:', error);
+      toast.error('Erreur lors de la mise à jour du statut');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -236,6 +279,12 @@ const ClientsPage: React.FC = () => {
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Téléphone
                 </th>
+                <th
+                  scope="col"
+                  className="px-4 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  POSSIBILITÉ RÉSERVATION
+                </th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
@@ -243,7 +292,12 @@ const ClientsPage: React.FC = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {currentItems.map((client) => (
-                <tr key={client._id} className="hover:bg-gray-50">
+                <tr 
+                  key={client._id} 
+                  className={`hover:bg-gray-50 ${
+                    !canClientMakeReservations(client) ? 'border-l-4 border-red-500' : ''
+                  }`}
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
@@ -278,6 +332,47 @@ const ClientsPage: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"> 
                     {client.phoneNumber || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center space-x-2">
+                      <select
+                        value={canClientMakeReservations(client) ? 'authorized' : 'blocked'}
+                        onChange={(e) => {
+                          const newStatus = e.target.value as 'authorized' | 'blocked';
+                          if (newStatus === 'blocked') {
+                            setEditingClient(client);
+                            setReservationStatus('blocked');
+                            setBlockReason(client.blockForReservationReason || '');
+                            setIsReasonModalOpen(true);
+                          } else {
+                            handleQuickStatusUpdate(client, newStatus);
+                          }
+                        }}
+                        className={`block w-32 pl-3 pr-10 py-2 text-base border-gray-300 sm:text-sm rounded-md ${
+                          canClientMakeReservations(client) 
+                            ? 'bg-green-50 text-green-700 border-green-200' 
+                            : 'bg-red-50 text-red-700 border-red-200'
+                        }`}
+                      >
+                        <option className="text-white bg-green-500" value="authorized">Autorisé</option>
+                        <option className="text-white bg-red-500" value="blocked">Bloqué</option>
+                      </select>
+                      {!canClientMakeReservations(client) && client.blockForReservationReason && (
+                        <button
+                          onClick={() => {
+                            setEditingClient(client);
+                            setReservationStatus('blocked');
+                            setBlockReason(client.blockForReservationReason || '');
+                            setIsReasonModalOpen(true);
+                          }}
+                          className="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+                          title="Modifier la raison"
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                   
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-2">
@@ -452,6 +547,85 @@ const ClientsPage: React.FC = () => {
                     setIsDeleteModalOpen(false);
                     setClientToDelete(null);
                   }}
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal pour modifier le statut de réservation et la raison */}
+      {isReasonModalOpen && editingClient && (
+        <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div className="relative inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+              <div>
+                <div className="mt-3 text-center sm:mt-0 sm:text-left">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                    Gérer la possibilité de réservation
+                  </h3>
+                  <div className="mt-4 space-y-4">
+                    {/* Select pour le statut de réservation */}
+                    <div>
+                      <label htmlFor="reservationStatus" className="block text-sm font-medium text-gray-700">
+                        Possibilité de réservation
+                      </label>
+                      <select
+                        id="reservationStatus"
+                        value={reservationStatus}
+                        onChange={(e) => setReservationStatus(e.target.value as 'authorized' | 'blocked')}
+                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                      >
+                        <option value="authorized">Autorisé</option>
+                        <option value="blocked">Bloqué</option>
+                      </select>
+                    </div>
+
+                    {/* Champ pour la raison du blocage */}
+                    {reservationStatus === 'blocked' && (
+                      <div>
+                        <label htmlFor="blockReason" className="block text-sm font-medium text-gray-700">
+                          Raison du blocage
+                        </label>
+                        <textarea
+                          id="blockReason"
+                          value={blockReason}
+                          onChange={(e) => setBlockReason(e.target.value)}
+                          rows={4}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                          placeholder="Entrez la raison du blocage..."
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                <button
+                  type="button"
+                  onClick={handleUpdateReservationStatus}
+                  disabled={reservationStatus === 'blocked' && !blockReason.trim()}
+                  className={`w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm ${
+                    reservationStatus === 'blocked' && !blockReason.trim()
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-indigo-600 hover:bg-indigo-700'
+                  }`}
+                >
+                  Valider
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsReasonModalOpen(false);
+                    setEditingClient(null);
+                    setBlockReason('');
+                    setReservationStatus('authorized');
+                  }}
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
                 >
                   Annuler
                 </button>

@@ -10,9 +10,13 @@ import {
   MapPinIcon,
   CalendarDaysIcon,
   IdentificationIcon,
-  ClockIcon
+  ClockIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import { useReservation } from '../../contexts/ReservationContext';
+import { clientService } from '../../services/client.service';
+import { toast } from 'react-hot-toast';
 
 interface ClientDetailsModalProps {
   isOpen: boolean;
@@ -24,6 +28,8 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ isOpen, onClose
   const { getClientReservationCount } = useReservation();
   const [reservationCount, setReservationCount] = useState<number | null>(null);
   const [loadingCount, setLoadingCount] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [blockReason, setBlockReason] = useState(client?.blockForReservationReason || '');
 
   useEffect(() => {
     let isMounted = true;
@@ -38,6 +44,45 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ isOpen, onClose
     }
     return () => { isMounted = false; };
   }, [isOpen, client, getClientReservationCount]);
+
+  const handleUpdateReservationPossibility = async (canMakeReservation: boolean) => {
+    if (!client?._id) {
+      toast.error('ID du client non trouvé');
+      return;
+    }
+    
+    if (!canMakeReservation && !blockReason.trim()) {
+      toast.error('Veuillez entrer une raison pour bloquer le client');
+      return;
+    }
+    
+    setIsUpdating(true);
+    try {
+      const updatedClient = await clientService.updateReservationPossibility(client._id, {
+        canMakeReservation,
+        blockForReservationReason: canMakeReservation ? undefined : blockReason.trim()
+      });
+      
+      // Mettre à jour le client localement
+      if (client) {
+        client.canMakeReservation = updatedClient.canMakeReservation;
+        client.blockForReservationReason = updatedClient.blockForReservationReason;
+        client.blockForReservationAt = updatedClient.blockForReservationAt;
+      }
+      
+      toast.success(canMakeReservation ? 'Client autorisé à faire des réservations' : 'Client bloqué pour les réservations');
+    } catch (error) {
+      console.error('Error updating reservation possibility:', error);
+      toast.error('Erreur lors de la mise à jour du statut de réservation');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Helper function to check if client can make reservations
+  const canClientMakeReservations = () => {
+    return client?.canMakeReservation === undefined ? true : client.canMakeReservation;
+  };
 
   if (!client) return null;
 
@@ -183,11 +228,77 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ isOpen, onClose
                           )}
                         </div>
                       </div>
+
+                      {/* Reservation Status Section */}
+                      <div>
+                        <div className="flex items-center space-x-2 mb-4">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                          <h3 className="text-lg font-semibold text-gray-800">Possibilité de réservation</h3>
+                        </div>
+                        <div className="bg-white rounded-xl border border-gray-200 p-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center space-x-3">
+                              {canClientMakeReservations() ? (
+                                <CheckCircleIcon className="h-6 w-6 text-green-500" />
+                              ) : (
+                                <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
+                              )}
+                              <span className="font-medium text-gray-900">
+                                {canClientMakeReservations() ? 'Peut faire des réservations' : 'Réservations bloquées'}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              {canClientMakeReservations() ? (
+                                <>
+                                  <div className="flex-1 min-w-[300px]">
+                                    <input
+                                      type="text"
+                                      value={blockReason}
+                                      onChange={(e) => setBlockReason(e.target.value)}
+                                      placeholder="Raison du blocage..."
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                    />
+                                  </div>
+                                  <button
+                                    onClick={() => handleUpdateReservationPossibility(false)}
+                                    disabled={isUpdating || !blockReason.trim()}
+                                    className="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors duration-200 disabled:bg-red-300 disabled:cursor-not-allowed"
+                                  >
+                                    Bloquer
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  onClick={() => handleUpdateReservationPossibility(true)}
+                                  disabled={isUpdating}
+                                  className="px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors duration-200"
+                                >
+                                  Autoriser
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {!canClientMakeReservations() && client.blockForReservationReason && (
+                            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                              <p className="text-sm text-gray-700">
+                                <span className="font-medium">Raison du blocage :</span> {client.blockForReservationReason}
+                              </p>
+                            </div>
+                          )}
+                          
+                          {client.blockForReservationAt && (
+                            <div className="mt-4 text-sm text-gray-500">
+                              Bloqué le {new Date(client.blockForReservationAt).toLocaleDateString('fr-FR')}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
                     {/* Right Column - License Image */}
                     <div className="lg:col-span-1">
-                      {client.drivingLicenseImage ? (
+                      {client.drivingLicenseBackImage ? (
                         <div className="sticky top-8">
                           <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 border border-gray-200">
                             <h4 className="font-semibold text-gray-800 mb-4 flex items-center space-x-2">
@@ -196,7 +307,7 @@ const ClientDetailsModal: React.FC<ClientDetailsModalProps> = ({ isOpen, onClose
                             </h4>
                             <div className="relative group">
                               <img 
-                                src={client.drivingLicenseImage} 
+                                src={client.drivingLicenseBackImage} 
                                 alt="Permis de conduire"
                                 className="w-full h-auto object-contain rounded-xl shadow-lg group-hover:shadow-xl transition-shadow duration-300 border border-gray-200"
                               />

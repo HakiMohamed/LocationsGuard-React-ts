@@ -49,8 +49,8 @@ const navigation = [
   { name: 'Réservations', href: '/admin/reservations', icon: CalendarIcon },
   { name: 'Maintenances', href: '/admin/maintenances', icon: WrenchScrewdriverIcon },
   { name: 'Dépenses', href: '/admin/depenses', icon: DollarSignIcon  },
-  { name: 'Paiements', href: '/admin/payments', icon: CreditCardIcon },
   { name: 'Statistiques', href: '/admin/statistics', icon: ChartBarIcon },
+  { name: 'Paiements', href: '/admin/payments', icon: CreditCardIcon },
   { name: 'Locations', href: '/admin/locations', icon: MapPinIcon },
   { name: 'Messages', href: '/admin/messages', icon: ChatBubbleLeftRightIcon },
   { name: 'Mon Profil', href: '/admin/profile', icon: UserCircleIcon },
@@ -205,9 +205,9 @@ const DashboardLayout = () => {
   const search = searchValue.trim().toLowerCase();
   const filteredAutomobiles = search
     ? automobiles.filter(auto =>
-        auto.brand.toLowerCase().includes(search) ||
-        auto.model.toLowerCase().includes(search) ||
-        auto.licensePlate.toLowerCase().includes(search)
+        (auto.brand?.toLowerCase() || '').includes(search) ||
+        (auto.model?.toLowerCase() || '').includes(search) ||
+        (auto.licensePlate?.toLowerCase() || '').includes(search)
       )
     : [];
   const filteredClients = search
@@ -270,7 +270,10 @@ const DashboardLayout = () => {
             <div className="flex h-20 items-center justify-between px-6 border-b border-indigo-500/20">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center shadow-lg">
-                  <img src={LocationGuardLogo} alt="LG" className="h-6 w-6 object-contain" />
+                <div className="flex">
+                    <span className="text-2xl font-bold text-indigo-800">L</span> 
+                    <span className="text-2xl font-bold text-rose-800">G</span>
+                  </div>
                 </div>
                 <div className="text-white">
                   <h1 className="text-lg font-bold tracking-tight">LocationGuard</h1>
@@ -334,8 +337,11 @@ const DashboardLayout = () => {
           <div className="flex h-20 items-center justify-between px-6 border-b border-indigo-500/20">
             {!sidebarCollapsed && (
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shadow-lg">
-                  <img src={LocationGuardLogo} alt="LG" className="h-8 w-8 object-contain" />
+                <div className="w-10 h-10 bg-gray-400 rounded-xl flex items-center justify-center shadow-lg">
+                  <div className="flex">
+                    <span className="text-2xl font-bold text-indigo-800">L</span> 
+                    <span className="text-2xl font-bold text-rose-800">G</span>
+                  </div>
                 </div>
                 <div className="text-white">
                   <h1 className="text-xl font-bold tracking-tight">LocationGuard</h1>

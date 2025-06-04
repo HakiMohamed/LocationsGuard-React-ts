@@ -28,7 +28,7 @@ const ReservationsPage: React.FC = () => {
   const { updateAutomobile } = useAutomobile();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(''); 
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [detailsReservation, setDetailsReservation] = useState<Reservation | null>(null);
   const [statusFilter, setStatusFilter] = useState('');
@@ -93,12 +93,9 @@ const ReservationsPage: React.FC = () => {
       }
       toast.success('Statut de la réservation mis à jour avec succès');
       await fetchReservations();
-    } catch (error: unknown) {
+    } catch (error: any) {
       console.error('Erreur lors de la mise à jour du statut:', error);
-      const errorMessage = error && typeof error === 'object' && 'response' in error
-        ? (error.response as { data?: { error?: { message?: string } } })?.data?.error?.message || 'Erreur lors de la mise à jour du statut'
-        : 'Erreur lors de la mise à jour du statut';
-      toast.error(errorMessage);
+      toast.error(error.message || 'Erreur lors de la mise à jour du statut');
     }
   };
 
@@ -131,9 +128,9 @@ const ReservationsPage: React.FC = () => {
       toast.success('Réservation terminée et kilométrage mis à jour');
       setIsKilometerModalOpen(false);
       await fetchReservations();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur lors de la mise à jour:', error);
-      toast.error('Erreur lors de la mise à jour');
+      toast.error(error.message || 'Erreur lors de la mise à jour');
     }
   };
 

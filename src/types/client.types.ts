@@ -13,6 +13,9 @@ export interface Client {
   phoneNumber?: string;
   createdAt: Date;
   updatedAt: Date;
+  canMakeReservation?: boolean;
+  blockForReservationReason?: string;
+  blockForReservationAt?: Date;
 }
 
 export interface CreateClientDto {
@@ -42,4 +45,9 @@ export interface UpdateClientDto {
   drivingLicenseFrontImage?: string;
   drivingLicenseBackImage?: string;
   drivingLicenseExpirationDate?: Date;
+}
+
+export interface UpdateReservationPossibilityDto {
+  canMakeReservation: boolean;
+  blockForReservationReason?: string;
 } 

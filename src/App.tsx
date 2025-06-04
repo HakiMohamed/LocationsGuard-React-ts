@@ -27,6 +27,10 @@ import ExpensesPage from './pages/admin/ExpensesPage';
 import { ExpenseProvider } from './contexts/ExpenseContext';
 import StatisticsPage from './pages/admin/StatisticsPage';
 import { StatsProvider } from './contexts/StatsContext';
+import LocationsPage from './pages/admin/LocationsPage';
+import PaymentsPage from './pages/admin/PaymentsPage';
+import MessagesPage from './pages/admin/MessagesPage';
+import SettingsPage from './pages/admin/SettingsPage';
 // Composant pour protéger les routes admin
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -112,6 +116,10 @@ function App() {
                             <StatisticsPage />
                           </StatsProvider>
                         } />
+                        <Route path="locations" element={<LocationsPage />} />
+                        <Route path="payments" element={<PaymentsPage />} />
+                        <Route path="messages" element={<MessagesPage />} />
+                        <Route path="settings" element={<SettingsPage />} />
                       </Route>
                       
                       {/* Route 404 */}

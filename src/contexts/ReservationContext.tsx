@@ -49,8 +49,9 @@ export const ReservationProvider: React.FC<{ children: React.ReactNode }> = ({ c
       const newReservation = await reservationService.create(data);
       setReservations(prev => [...prev, newReservation]);
       setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } catch (err: any) {
+      const backendErrorMessage = err.response?.data?.error?.message;
+      setError(backendErrorMessage || err.message || 'Une erreur est survenue lors de la création');
       throw err;
     } finally {
       setLoading(false);
@@ -66,8 +67,9 @@ export const ReservationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         prev.map(reservation => reservation._id === id ? updatedReservation : reservation)
       );
       setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } catch (err: any) {
+      const backendErrorMessage = err.response?.data?.error?.message;
+      setError(backendErrorMessage || err.message || 'Une erreur est survenue lors de la mise à jour');
       throw err;
     } finally {
       setLoading(false);
@@ -126,8 +128,9 @@ export const ReservationProvider: React.FC<{ children: React.ReactNode }> = ({ c
       setReservations(prev => 
         prev.map(reservation => reservation._id === id ? updatedReservation : reservation)
       );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } catch (err: any) {
+      const backendErrorMessage = err.response?.data?.error?.message;
+      setError(backendErrorMessage || err.message || "Une erreur est survenue lors de l'annulation");
       throw err;
     } finally {
       setLoading(false);
@@ -142,8 +145,9 @@ export const ReservationProvider: React.FC<{ children: React.ReactNode }> = ({ c
       setReservations(prev => 
         prev.map(reservation => reservation._id === id ? updatedReservation : reservation)
       );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } catch (err: any) {
+      const backendErrorMessage = err.response?.data?.error?.message;
+      setError(backendErrorMessage || err.message || 'Une erreur est survenue lors de la confirmation');
       throw err;
     } finally {
       setLoading(false);
@@ -158,8 +162,9 @@ export const ReservationProvider: React.FC<{ children: React.ReactNode }> = ({ c
       setReservations(prev => 
         prev.map(reservation => reservation._id === id ? updatedReservation : reservation)
       );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } catch (err: any) {
+      const backendErrorMessage = err.response?.data?.error?.message;
+      setError(backendErrorMessage || err.message || 'Une erreur est survenue lors de la finalisation');
       throw err;
     } finally {
       setLoading(false);
@@ -174,8 +179,9 @@ export const ReservationProvider: React.FC<{ children: React.ReactNode }> = ({ c
       setReservations(prev => 
         prev.map(reservation => reservation._id === id ? updatedReservation : reservation)
       );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } catch (err: any) {
+      const backendErrorMessage = err.response?.data?.error?.message;
+      setError(backendErrorMessage || err.message || 'Une erreur est survenue lors de la mise à jour du statut');
       throw err;
     } finally { 
       setLoading(false);
@@ -190,8 +196,9 @@ export const ReservationProvider: React.FC<{ children: React.ReactNode }> = ({ c
       setReservations(prev => 
         prev.map(reservation => reservation._id === id ? updatedReservation : reservation)
       );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } catch (err: any) {
+      const backendErrorMessage = err.response?.data?.error?.message;
+      setError(backendErrorMessage || err.message || 'Une erreur est survenue lors de la mise en attente');
       throw err;
     } finally {
       setLoading(false);
@@ -206,8 +213,9 @@ export const ReservationProvider: React.FC<{ children: React.ReactNode }> = ({ c
       setReservations(prev =>
         prev.map(reservation => reservation._id === id ? updatedReservation : reservation)
       );
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } catch (err: any) {
+      const backendErrorMessage = err.response?.data?.error?.message;
+      setError(backendErrorMessage || err.message || 'Une erreur est survenue lors de la mise à jour du statut de paiement');
       throw err;
     } finally {
       setLoading(false);

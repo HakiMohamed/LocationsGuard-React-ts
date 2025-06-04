@@ -210,10 +210,8 @@ const AutomobilesPage: React.FC = () => {
     try {
       if (selectedAutomobile) {
         await updateAutomobile(selectedAutomobile._id, data);
-        toast.success('Automobile mise à jour avec succès');
       } else {
         await createAutomobile(data);
-        toast.success('Automobile créée avec succès');
       }
       setIsModalOpen(false);
       setSelectedAutomobile(null);
@@ -519,7 +517,7 @@ const AutomobilesPage: React.FC = () => {
                     onClick={() => requestSort('brand')}
                   >
                     <div className="flex items-center">
-                      Marque
+                      Image
                       {sortConfig?.key === 'brand' && (
                         <span className="ml-1">
                           {sortConfig.direction === 'ascending' ? '↑' : '↓'}
@@ -531,7 +529,7 @@ const AutomobilesPage: React.FC = () => {
                     onClick={() => requestSort('model')}
                   >
                     <div className="flex items-center">
-                      Modèle
+                    Marque et Modèle
                       {sortConfig?.key === 'model' && (
                         <span className="ml-1">
                           {sortConfig.direction === 'ascending' ? '↑' : '↓'}
@@ -595,7 +593,7 @@ const AutomobilesPage: React.FC = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {paginatedAutomobiles.map((automobile) => (
                   <tr key={automobile._id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="py-4 pl-2 whitespace-nowrap">
                       <div className="flex items-center">
                         {automobile.images && automobile.images.length > 0 ? (
                           <img 
@@ -611,10 +609,10 @@ const AutomobilesPage: React.FC = () => {
                             </svg>
                           </div>
                         )}
-                        <span className="font-medium text-gray-900">{automobile.brand}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
+                      <span className="font-medium text-gray-900">{automobile.brand}</span>
                       <div className="text-sm text-gray-900">{automobile.model}</div>
                       <div className="text-xs text-gray-500">{automobile.licensePlate}</div>
                     </td>

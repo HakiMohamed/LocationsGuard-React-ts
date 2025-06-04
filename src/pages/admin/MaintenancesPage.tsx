@@ -270,33 +270,12 @@ const MaintenancePage: React.FC = () => {
         });
      }
 
-  // Apply sorting
-  if (sortConfig !== null) {
-      currentMaintenances.sort((a, b) => {
-      const aValue = getNestedProperty(a, sortConfig.key);
-      const bValue = getNestedProperty(b, sortConfig.key);
-        // Handle potential null/undefined values during comparison
-        if (aValue == null && bValue == null) return 0;
-        if (aValue == null) return sortConfig.direction === 'ascending' ? -1 : 1;
-        if (bValue == null) return sortConfig.direction === 'ascending' ? 1 : -1;
-        // Specific handling for date strings
-        if (sortConfig.key.includes('Date')) {
-          const dateA = typeof aValue === 'string' && !isNaN(Date.parse(aValue)) ? new Date(aValue).getTime() : 0;
-          const dateB = typeof bValue === 'string' && !isNaN(Date.parse(bValue)) ? new Date(bValue).getTime() : 0;
-          if (dateA < dateB) return sortConfig.direction === 'ascending' ? -1 : 1;
-          if (dateA > dateB) return sortConfig.direction === 'ascending' ? 1 : -1;
-          return 0;
-        }
-        // Default comparison
-      if (aValue < bValue) {
-        return sortConfig.direction === 'ascending' ? -1 : 1;
-      }
-      if (aValue > bValue) {
-        return sortConfig.direction === 'ascending' ? 1 : -1;
-      }
-      return 0;
-    });
-  }
+  // Sort by createdAt in descending order (newest first)
+  currentMaintenances.sort((a, b) => {
+    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return dateB - dateA;
+  });
 
     return currentMaintenances;
   };

@@ -1,6 +1,8 @@
 import React from 'react';
-import { Pie, Bar } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 import { ReservationStats } from '../../types/automobile.types';
+import { PieChart, Pie, Cell, Legend as PieLegend, Tooltip as PieTooltip } from 'recharts';
+
 
 interface ReservationStatsComponentProps {
   mostReserved: ReservationStats[];
@@ -13,19 +15,13 @@ const ReservationStatsComponent: React.FC<ReservationStatsComponentProps> = ({
   leastReserved,
   onAutomobileClick,
 }) => {
-  const pieChartData = {
-    labels: mostReserved.map(auto => `${auto.brand} ${auto.model}`),
-    datasets: [{
-      data: mostReserved.map(auto => auto.reservationCount),
-      backgroundColor: [
-        'rgba(54, 162, 235, 0.8)',
-        'rgba(75, 192, 192, 0.8)',
-        'rgba(153, 102, 255, 0.8)',
-        'rgba(255, 159, 64, 0.8)',
-      ],
-      borderWidth: 1
-    }]
-  };
+  const COLORS = ['#6366F1', '#8B5CF6', '#F59E42', '#10B981', '#F43F5E', '#FBBF24', '#3B82F6', '#14B8A6', '#E11D48', '#A21CAF'];
+
+  const pieChartData = mostReserved.map((auto, index) => ({
+    name: `${auto.brand} ${auto.model}`,
+    value: auto.reservationCount,
+    color: COLORS[index % COLORS.length]
+  }));
 
   const barChartData = {
     labels: leastReserved.map(auto => `${auto.brand} ${auto.model}`),
@@ -50,24 +46,56 @@ const ReservationStatsComponent: React.FC<ReservationStatsComponentProps> = ({
             </svg>
           </div>
         </div>
-        <div className="mb-8 h-72">
-          <Pie 
-            data={pieChartData} 
-            options={{ 
-              maintainAspectRatio: false, 
-              plugins: { legend: { position: 'bottom' } } 
-            }} 
-          />
+        <div className="mb-8 flex flex-col items-center w-full" style={{ minHeight: 300 }}>
+          <PieChart width={window.innerWidth < 640 ? 250 : 350} height={window.innerWidth < 640 ? 250 : 300}>
+            <Pie
+              data={pieChartData}
+              cx="50%"
+              cy="50%"
+              innerRadius={70}
+              outerRadius={100}
+              fill="#8884d8"
+              dataKey="value"
+              label={false}
+              labelLine={false}
+              stroke="#fff"
+            >
+              {pieChartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Pie>
+            <PieTooltip
+              formatter={(value, name, _props, payload) => {
+                let entry = { name };
+                if (Array.isArray(payload) && payload[0] && payload[0].payload) {
+                  entry = payload[0].payload;
+                }
+                return [`${value} réservations`, entry.name];
+              }}
+            />
+          </PieChart>
+          <div className="flex flex-wrap justify-center gap-4 mt-6 w-full">
+            {pieChartData.map((entry, idx) => {
+              const percent = ((entry.value / pieChartData.reduce((sum, e) => sum + e.value, 0)) * 100).toFixed(0);
+              return (
+                <div key={entry.name} className="flex items-center space-x-2 bg-gray-50 rounded-lg px-3 py-2 shadow-sm" style={{ minWidth: 120 }}>
+                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color, display: 'inline-block' }}></span>
+                  <span className="font-medium text-gray-900 whitespace-nowrap">{entry.name}</span>
+                  <span className="text-xs text-gray-500">({entry.value} réservations, {percent}%)</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
         <div className="space-y-4">
           {mostReserved.map((auto) => (
             <div
               key={auto._id}
               onClick={() => onAutomobileClick(auto)}
-              className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-blue-50 cursor-pointer transition-all duration-300 group"
+              className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-xl hover:bg-blue-50 cursor-pointer transition-all duration-300 group gap-3 sm:gap-0"
             >
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-xl overflow-hidden">
+              <div className="flex flex-row sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden flex-shrink-0">
                   {auto.images && auto.images[0] ? (
                     <img
                       src={auto.images[0]}
@@ -82,15 +110,15 @@ const ReservationStatsComponent: React.FC<ReservationStatsComponentProps> = ({
                     </div>
                   )}
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 group-hover:text-blue-600">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 truncate">
                     {auto.brand} {auto.model}
                   </h3>
                   <p className="text-sm text-gray-500">Année {auto.year}</p>
                 </div>
               </div>
-              <div className="flex items-center">
-                <span className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium group-hover:bg-blue-200">
+              <div className="flex items-center mt-2 sm:mt-0 w-full sm:w-auto justify-end">
+                <span className="px-3 py-1 sm:px-4 sm:py-2 bg-blue-100 text-blue-800 rounded-full text-xs sm:text-sm font-medium group-hover:bg-blue-200">
                   {auto.reservationCount} réservation{auto.reservationCount > 1 ? 's' : ''}
                 </span>
               </div>
@@ -130,10 +158,10 @@ const ReservationStatsComponent: React.FC<ReservationStatsComponentProps> = ({
             <div
               key={auto._id}
               onClick={() => onAutomobileClick(auto)}
-              className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-red-50 cursor-pointer transition-all duration-300 group"
+              className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-xl hover:bg-red-50 cursor-pointer transition-all duration-300 group gap-3 sm:gap-0"
             >
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-xl overflow-hidden">
+              <div className="flex flex-row sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden flex-shrink-0">
                   {auto.images && auto.images[0] ? (
                     <img
                       src={auto.images[0]}
@@ -148,15 +176,15 @@ const ReservationStatsComponent: React.FC<ReservationStatsComponentProps> = ({
                     </div>
                   )}
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 group-hover:text-red-600">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-gray-900 group-hover:text-red-600 truncate">
                     {auto.brand} {auto.model}
                   </h3>
                   <p className="text-sm text-gray-500">Année {auto.year}</p>
                 </div>
               </div>
-              <div className="flex items-center">
-                <span className="px-4 py-2 bg-red-100 text-red-800 rounded-full text-sm font-medium group-hover:bg-red-200">
+              <div className="flex items-center mt-2 sm:mt-0 w-full sm:w-auto justify-end">
+                <span className="px-3 py-1 sm:px-4 sm:py-2 bg-red-100 text-red-800 rounded-full text-xs sm:text-sm font-medium group-hover:bg-red-200">
                   {auto.reservationCount} réservation{auto.reservationCount > 1 ? 's' : ''}
                 </span>
               </div>

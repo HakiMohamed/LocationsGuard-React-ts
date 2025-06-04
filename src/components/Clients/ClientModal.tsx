@@ -9,7 +9,8 @@ import {
   UserCircleIcon,
   MapPinIcon,
   IdentificationIcon,
-  CameraIcon
+  CameraIcon,
+  CalendarDaysIcon
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-hot-toast';
 import Input from '../ui/Input';
@@ -39,6 +40,8 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSubmit, in
     drivingLicenseNumber: '',
     drivingLicenseDate: '',
     drivingLicenseExpirationDate: '',
+    canMakeReservation: true,
+    blockForReservationReason: '',
   });
 
   const [processingSteps, setProcessingSteps] = useState<{
@@ -58,6 +61,8 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSubmit, in
         drivingLicenseNumber: initialData.drivingLicenseNumber || '',
         drivingLicenseDate: initialData.drivingLicenseDate ? new Date(initialData.drivingLicenseDate).toISOString().split('T')[0] : '',
         drivingLicenseExpirationDate: initialData.drivingLicenseExpirationDate ? new Date(initialData.drivingLicenseExpirationDate).toISOString().split('T')[0] : '',
+        canMakeReservation: initialData.canMakeReservation ?? true,
+        blockForReservationReason: initialData.blockForReservationReason || '',
       });
     } else {
       setFormData({
@@ -70,6 +75,8 @@ const ClientModal: React.FC<ClientModalProps> = ({ isOpen, onClose, onSubmit, in
         drivingLicenseNumber: '',
         drivingLicenseDate: '',
         drivingLicenseExpirationDate: '',
+        canMakeReservation: true,
+        blockForReservationReason: '',
       });
     }
   }, [initialData]);
