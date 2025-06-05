@@ -38,7 +38,8 @@ import { Reservation } from '../types/reservation.types';
 import { MaintenanceWithNextDetails } from '../types/maintenance.types';
 import CategoryDetailsModal from '../components/categories/CategoryDetailsModal';
 import ClientDetailsModal from '../components/Clients/ClientDetailsModal';
-import { DollarSignIcon } from 'lucide-react';
+import { DollarSignIcon, MessageCircleIcon } from 'lucide-react';
+
 import { Switch } from '@headlessui/react';
 
 const navigation = [
@@ -50,6 +51,7 @@ const navigation = [
   { name: 'Maintenances', href: '/admin/maintenances', icon: WrenchScrewdriverIcon },
   { name: 'Dépenses', href: '/admin/depenses', icon: DollarSignIcon  },
   { name: 'Statistiques', href: '/admin/statistics', icon: ChartBarIcon },
+  { name: 'Whatsapp', href: '/admin/whatsapp', icon: MessageCircleIcon },
   { name: 'Paiements', href: '/admin/payments', icon: CreditCardIcon },
   { name: 'Locations', href: '/admin/locations', icon: MapPinIcon },
   { name: 'Messages', href: '/admin/messages', icon: ChatBubbleLeftRightIcon },

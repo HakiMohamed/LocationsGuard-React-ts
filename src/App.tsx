@@ -31,6 +31,8 @@ import LocationsPage from './pages/admin/LocationsPage';
 import PaymentsPage from './pages/admin/PaymentsPage';
 import MessagesPage from './pages/admin/MessagesPage';
 import SettingsPage from './pages/admin/SettingsPage';
+import WhatsAppPage from './pages/admin/WhatsAppPage';
+import { WhatsAppProvider } from './contexts/WhatsAppContext';
 // Composant pour protéger les routes admin
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -86,45 +88,48 @@ function App() {
                 <ClientProvider>
                   <MaintenanceProvider>
                     <ExpenseProvider>
-                    <Routes>
-                      {/* Redirection de la racine vers /home ou /admin selon le rôle */}
-                      <Route path="/" element={<PrivateRoute><RoleBasedRedirect /></PrivateRoute>} />
-                      
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/register" element={<Register />} />
-                      <Route path="/verify-email" element={<VerifyEmail />} />
-                      <Route path="/auth/verify-email" element={<EmailVerification />} />
-                      <Route path="/request-password-reset" element={<RequestPasswordReset />} />
-                      <Route path="auth/reset-password" element={<ResetPassword />} />
-                      
-                      {/* Page d'accueil pour les utilisateurs non-admin */}
-                      <Route path="/home" element={<PrivateRoute><HomePage /></PrivateRoute>} />
-                      
-                      {/* Routes admin protégées */}
-                      <Route path="/admin" element={<AdminRoute><DashboardLayout /></AdminRoute>}>
-                        <Route index element={<Navigate to="/admin/dashboard" replace />} />
-                        <Route path="dashboard" element={<Dashboard />} />
-                        <Route path="clients" element={<ClientsPage />} />
-                        <Route path="automobiles" element={<AutomobilesPage />} />
-                        <Route path="categories" element={<CategoriesPage />} />
-                        <Route path="reservations" element={<ReservationsPage />} />
-                        <Route path="profile" element={<ProfilePage />} />
-                        <Route path="maintenances" element={<MaintenancesPage />} />
-                        <Route path="depenses" element={<ExpensesPage />} />
-                        <Route path="statistics" element={
-                          <StatsProvider>
-                            <StatisticsPage />
-                          </StatsProvider>
-                        } />
-                        <Route path="locations" element={<LocationsPage />} />
-                        <Route path="payments" element={<PaymentsPage />} />
-                        <Route path="messages" element={<MessagesPage />} />
-                        <Route path="settings" element={<SettingsPage />} />
-                      </Route>
-                      
-                      {/* Route 404 */}
-                      <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
+                      <WhatsAppProvider>
+                        <Routes>
+                          {/* Redirection de la racine vers /home ou /admin selon le rôle */}
+                          <Route path="/" element={<PrivateRoute><RoleBasedRedirect /></PrivateRoute>} />
+                          
+                          <Route path="/login" element={<Login />} />
+                          <Route path="/register" element={<Register />} />
+                          <Route path="/verify-email" element={<VerifyEmail />} />
+                          <Route path="/auth/verify-email" element={<EmailVerification />} />
+                          <Route path="/request-password-reset" element={<RequestPasswordReset />} />
+                          <Route path="auth/reset-password" element={<ResetPassword />} />
+                          
+                          {/* Page d'accueil pour les utilisateurs non-admin */}
+                          <Route path="/home" element={<PrivateRoute><HomePage /></PrivateRoute>} />
+                          
+                          {/* Routes admin protégées */}
+                          <Route path="/admin" element={<AdminRoute><DashboardLayout /></AdminRoute>}>
+                            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                            <Route path="dashboard" element={<Dashboard />} />
+                            <Route path="clients" element={<ClientsPage />} />
+                            <Route path="automobiles" element={<AutomobilesPage />} />
+                            <Route path="categories" element={<CategoriesPage />} />
+                            <Route path="reservations" element={<ReservationsPage />} />
+                            <Route path="profile" element={<ProfilePage />} />
+                            <Route path="maintenances" element={<MaintenancesPage />} />
+                            <Route path="depenses" element={<ExpensesPage />} />
+                            <Route path="statistics" element={
+                              <StatsProvider>
+                                <StatisticsPage />
+                              </StatsProvider>
+                            } />
+                            <Route path="locations" element={<LocationsPage />} />
+                            <Route path="payments" element={<PaymentsPage />} />
+                            <Route path="messages" element={<MessagesPage />} />
+                            <Route path="settings" element={<SettingsPage />} />
+                            <Route path="whatsapp" element={<WhatsAppPage />} />
+                          </Route>
+                          
+                          {/* Route 404 */}
+                          <Route path="*" element={<Navigate to="/" replace />} />
+                        </Routes>
+                      </WhatsAppProvider>
                     </ExpenseProvider>
                   </MaintenanceProvider>
                 </ClientProvider>

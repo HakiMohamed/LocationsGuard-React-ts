@@ -119,6 +119,8 @@ export default function Login() {
         </form>
 
         <div className="text-center text-sm">
+
+      {/*
           <span className="text-neutral-600 dark:text-neutral-400">
             Don't have an account?{' '}
           </span>
@@ -128,6 +130,8 @@ export default function Login() {
           >
             Sign up
           </Link>
+        </div>
+        */}
         </div>
       </div>
     </div>
