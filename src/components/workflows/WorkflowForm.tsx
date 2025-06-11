@@ -180,7 +180,7 @@ const WorkflowForm: React.FC<WorkflowFormProps> = ({ workflow, onClose, onSave }
               {buttons.map((button, index) => (
                 <div key={button.id} className="p-4 border border-gray-200 rounded-md space-y-3">
                   <div className="flex justify-between items-start">
-                    <h4 className="text-sm font-medium text-gray-700">Button {index + 1}</h4>
+                    <h4 className="text-sm font-medium text-gray-700">Bouton {index + 1}</h4>
                     <button
                       type="button"
                       onClick={() => handleRemoveButton(index)}
@@ -191,7 +191,7 @@ const WorkflowForm: React.FC<WorkflowFormProps> = ({ workflow, onClose, onSave }
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Button Text</label>
+                    <label className="block text-sm font-medium text-gray-700">Texte du bouton</label>
                     <input
                       type="text"
                       value={button.text}
@@ -202,28 +202,31 @@ const WorkflowForm: React.FC<WorkflowFormProps> = ({ workflow, onClose, onSave }
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Reply Message</label>
+                    <label className="block text-sm font-medium text-gray-700">Message de réponse</label>
                     <textarea
                       value={button.replyMessage}
                       onChange={(e) => handleButtonChange(index, 'replyMessage', e.target.value)}
+                      placeholder="Entrez le message qui sera envoyé lorsque ce bouton est cliqué"
                       rows={2}
                       className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Next Workflow</label>
+                    <label className="block text-sm font-medium text-gray-700">Lier à un autre workflow</label>
                     <select
                       value={button.nextWorkflowId}
                       onChange={(e) => handleButtonChange(index, 'nextWorkflowId', e.target.value)}
                       className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     >
-                      <option value="">None</option>
-                      {availableWorkflows.map((w) => (
-                        <option key={w._id} value={w._id}>
-                          {w.name}
-                        </option>
-                      ))}
+                      <option value="">Aucun</option>
+                      {availableWorkflows
+                        .filter(w => !workflow || w._id !== workflow._id)
+                        .map((w) => (
+                          <option key={w._id} value={w._id}>
+                            {w.name}
+                          </option>
+                        ))}
                     </select>
                   </div>
                 </div>

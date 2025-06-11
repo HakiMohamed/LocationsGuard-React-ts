@@ -22,7 +22,7 @@ export const workflowService = {
 
   getAll: async (): Promise<Workflow[]> => {
     const response = await api.get('/workflows');
-    return response.data.data;
+    return Array.isArray(response.data.data?.data) ? response.data.data.data : [];
   },
 
   getOne: async (id: string): Promise<Workflow> => {

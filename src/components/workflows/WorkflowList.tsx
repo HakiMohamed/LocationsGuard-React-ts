@@ -13,12 +13,13 @@ const WorkflowList: React.FC = () => {
   const [search, setSearch] = useState('');
   const [sendDialog, setSendDialog] = useState<{ open: boolean, workflow?: Workflow }>({ open: false });
   const [showForm, setShowForm] = useState(false);
+  const [editWorkflow, setEditWorkflow] = useState<Workflow | null>(null);
 
   const fetchWorkflows = async () => {
     setLoading(true);
     try {
-      const response = await workflowService.getAll();
-      setWorkflows(Array.isArray(response) ? response : []);
+      const data = await workflowService.getAll();
+      setWorkflows(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching workflows:', error);
       setWorkflows([]);
@@ -67,7 +68,7 @@ const WorkflowList: React.FC = () => {
             <IconButton onClick={() => setSendDialog({ open: true, workflow: params.row })}><Send /></IconButton>
           </Tooltip>
           <Tooltip title="Edit">
-            <IconButton color="primary" /* onClick={...} */><Edit /></IconButton>
+            <IconButton color="primary" onClick={() => setEditWorkflow(params.row)}><Edit /></IconButton>
           </Tooltip>
           <Tooltip title="Delete">
             <IconButton color="error" onClick={() => handleDelete(params.id as string)}><Delete /></IconButton>
@@ -82,7 +83,7 @@ const WorkflowList: React.FC = () => {
 
   return (
     <Box>
-      <Box display="flex" alignItems="center" mb={2}>
+      <Box display="flex" p={2} alignItems="center" mb={2}>
         <Typography variant="h5" flex={1}>Workflows</Typography>
         <TextField
           size="small"
@@ -118,6 +119,16 @@ const WorkflowList: React.FC = () => {
           onClose={() => setShowForm(false)}
           onSave={() => {
             setShowForm(false);
+            fetchWorkflows();
+          }}
+        />
+      )}
+      {editWorkflow && (
+        <WorkflowForm
+          workflow={editWorkflow}
+          onClose={() => setEditWorkflow(null)}
+          onSave={() => {
+            setEditWorkflow(null);
             fetchWorkflows();
           }}
         />

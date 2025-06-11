@@ -4,12 +4,16 @@ import { ArrowPathIcon, PhoneIcon, PaperAirplaneIcon, QrCodeIcon, SignalIcon, Si
 import { QRCodeSVG } from 'qrcode.react';
 import WhatsAppConversations from '../../components/WhatsAppConversations';
 import WorkflowList from '../../components/workflows/WorkflowList';
+import WorkflowGraph from '../../components/workflows/WorkflowGraph';
+import { Workflow } from '../../types/workflow';
 
 const WhatsAppPage: React.FC = () => {
   const { status, logs = [], isLoading, refreshStatus, refreshLogs, disconnect, sendMessage } = useWhatsApp();
   const [number, setNumber] = useState('');
   const [message, setMessage] = useState('');
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [graphWorkflow, setGraphWorkflow] = useState<Workflow | null>(null);
+  const [allWorkflows, setAllWorkflows] = useState<Workflow[]>([]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -239,7 +243,39 @@ const WhatsAppPage: React.FC = () => {
 
       {activeTab === 'workflows' && (
         <div className="bg-white shadow rounded-lg overflow-hidden">
-          <WorkflowList />
+          <WorkflowList
+            onViewGraph={setGraphWorkflow}
+            onWorkflowsLoaded={setAllWorkflows}
+          />
+        </div>
+      )}
+
+      {graphWorkflow && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.3)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onClick={() => setGraphWorkflow(null)}
+        >
+          <div
+            style={{ background: '#fff', borderRadius: 8, padding: 24, minWidth: 900, minHeight: 600 }}
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 style={{ marginBottom: 16 }}>{graphWorkflow.name}</h2>
+            <WorkflowGraph workflow={graphWorkflow} workflows={allWorkflows} />
+            <button
+              style={{ marginTop: 16 }}
+              onClick={() => setGraphWorkflow(null)}
+            >
+              Fermer
+            </button>
+          </div>
         </div>
       )}
     </div>
