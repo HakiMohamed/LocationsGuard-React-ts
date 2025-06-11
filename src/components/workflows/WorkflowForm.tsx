@@ -18,11 +18,13 @@ const WorkflowForm: React.FC<WorkflowFormProps> = ({ workflow, onClose, onSave }
   const [buttons, setButtons] = useState<Button[]>([]);
   const [availableWorkflows, setAvailableWorkflows] = useState<Workflow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [order, setOrder] = useState<number>(1);
 
   useEffect(() => {
     if (workflow) {
       setName(workflow.name);
       setDescription(workflow.description || '');
+      setOrder(workflow.order || 1);
       if (workflow.steps && workflow.steps.length > 0) {
         setMessage(workflow.steps[0].message);
         setButtons(workflow.steps[0].buttons || []);
@@ -38,6 +40,10 @@ const WorkflowForm: React.FC<WorkflowFormProps> = ({ workflow, onClose, onSave }
     try {
       const data = await workflowService.getAll();
       setAvailableWorkflows(data.filter(w => !workflow || w._id !== workflow._id));
+      if (!workflow) {
+        const maxOrder = Math.max(...data.map(w => w.order || 0), 0);
+        setOrder(maxOrder + 1);
+      }
     } catch (error) {
       toast.error('Failed to load workflows');
     }
@@ -77,6 +83,7 @@ const WorkflowForm: React.FC<WorkflowFormProps> = ({ workflow, onClose, onSave }
       const workflowData = {
         name,
         description,
+        order,
         isActive: workflow?.isActive ?? false,
         steps: [
           {
@@ -104,8 +111,8 @@ const WorkflowForm: React.FC<WorkflowFormProps> = ({ workflow, onClose, onSave }
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-gray-500 z-50 bg-opacity-75 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-medium text-gray-900">
@@ -146,6 +153,21 @@ const WorkflowForm: React.FC<WorkflowFormProps> = ({ workflow, onClose, onSave }
               onChange={(e) => setDescription(e.target.value)}
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               required
+            />
+          </div>
+
+          <div>
+            <label htmlFor="order" className="block text-sm font-medium text-gray-700">
+              Order
+            </label>
+            <input
+              type="number"
+              id="order"
+              value={order}
+              onChange={(e) => setOrder(parseInt(e.target.value))}
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              required
+              min="1"
             />
           </div>
 

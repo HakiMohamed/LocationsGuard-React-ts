@@ -52,14 +52,20 @@ const WorkflowList: React.FC = () => {
   const columns: GridColDef[] = [
     { field: 'name', headerName: 'Name', flex: 1 },
     { field: 'description', headerName: 'Description', flex: 2 },
-    { field: 'steps', headerName: 'Steps', width: 100, valueGetter: (params: GridRenderCellParams<Workflow>) => params.row?.steps?.length ?? 0 },
+    { field: 'order', headerName: 'Order', width: 100 },
     { field: 'isActive', headerName: 'Active', width: 100, renderCell: (params: GridRenderCellParams<Workflow>) => (
       <Switch checked={params.value} onChange={() =>
         params.value ? handleDeactivate(params.id as string) : handleActivate(params.id as string)
       } />
     )},
-    { field: 'createdAt', headerName: 'Created', width: 180, valueGetter: (params: GridRenderCellParams<Workflow>) =>
-      params.row?.createdAt ? new Date(params.row.createdAt).toLocaleString() : ''
+    { 
+      field: 'createdAt', 
+      headerName: 'Created', 
+      width: 180,
+      renderCell: (params: GridRenderCellParams<Workflow>) => {
+        if (!params.value) return '';
+        return new Date(params.value).toLocaleString();
+      }
     },
     {
       field: 'actions', headerName: 'Actions', width: 180, renderCell: (params: GridRenderCellParams<Workflow>) => (

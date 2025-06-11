@@ -27,6 +27,7 @@ export interface Workflow {
   _id?: string;
   name: string;
   description: string;
+  order: number;
   steps: WorkflowStep[];
   isActive: boolean;
   userResponses?: Record<string, any>;
